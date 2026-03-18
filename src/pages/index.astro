@@ -23,46 +23,55 @@ const tocItems = rendered.map(({ id, title }) => ({ id, title }));
 ---
 
 <BaseLayout
-  title="State of State Management — The Rise of Graph-based Approaches"
-  description="Comparing state management architectures across Web, iOS, and Android — Push-based vs Graph-based paradigms in 2026."
+  title="State of State Management"
+  description="The rise of graph-based state management across Web, iOS, and Android — Push-based vs Graph-based paradigms in 2026."
 >
   <Header />
 
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-    <div class="lg:grid lg:grid-cols-[220px_1fr] lg:gap-12">
+  <div class="max-w-5xl mx-auto px-5 sm:px-6">
+    <div class="lg:grid lg:grid-cols-[180px_1fr] lg:gap-16">
       <!-- Sidebar ToC (desktop) -->
       <aside class="hidden lg:block">
         <TableOfContents sections={tocItems} />
       </aside>
 
       <!-- Main content -->
-      <main class="min-w-0">
+      <main class="min-w-0 max-w-2xl">
         <!-- Mobile ToC -->
-        <div class="lg:hidden mb-8">
-          <details class="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-            <summary class="text-sm font-semibold text-gray-600 dark:text-gray-300 cursor-pointer">
-              Table of Contents
-            </summary>
-            <ul class="mt-2 space-y-1">
-              {tocItems.map(({ id, title }) => (
-                <li>
-                  <a href={`#${id}`} class="block py-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
-                    {title}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </details>
-        </div>
+        <details class="lg:hidden mb-10 group">
+          <summary class="text-[13px] font-medium text-neutral-400 dark:text-neutral-500 cursor-pointer hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors">
+            Table of Contents
+          </summary>
+          <ul class="mt-3 space-y-1 pl-0">
+            {tocItems.map(({ id, title }) => (
+              <li class="list-none">
+                <a href={`#${id}`} class="block py-1 text-[13px] text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors">
+                  {title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </details>
 
         <!-- Article sections -->
         <article>
-          {rendered.map(({ id, title, Content }) => (
-            <section id={id} class="mb-12">
-              <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 pb-2 border-b border-gray-200 dark:border-gray-700">
+          {rendered.map(({ id, title, Content }, i) => (
+            <section id={id} class:list={["pb-14", i > 0 && "pt-14 border-t border-neutral-100 dark:border-neutral-800/60"]}>
+              <h2 class="text-xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100 mb-6">
                 {title}
               </h2>
-              <div class="prose prose-gray dark:prose-invert max-w-none prose-headings:scroll-mt-8 prose-code:before:content-none prose-code:after:content-none prose-code:bg-gray-100 dark:prose-code:bg-gray-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-pre:bg-gray-950 prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline">
+              <div class="prose prose-neutral dark:prose-invert prose-sm max-w-none
+                prose-headings:font-medium prose-headings:tracking-tight prose-headings:scroll-mt-8
+                prose-h3:text-base prose-h3:mt-8 prose-h3:mb-3
+                prose-h4:text-sm prose-h4:mt-6 prose-h4:mb-2 prose-h4:font-semibold
+                prose-p:leading-relaxed prose-p:text-neutral-600 dark:prose-p:text-neutral-400
+                prose-li:text-neutral-600 dark:prose-li:text-neutral-400
+                prose-strong:text-neutral-700 dark:prose-strong:text-neutral-300 prose-strong:font-medium
+                prose-a:text-neutral-900 dark:prose-a:text-neutral-200 prose-a:underline prose-a:decoration-neutral-300 dark:prose-a:decoration-neutral-700 prose-a:underline-offset-2 hover:prose-a:decoration-neutral-500
+                prose-code:before:content-none prose-code:after:content-none
+                prose-code:text-[13px] prose-code:font-normal prose-code:bg-neutral-100 dark:prose-code:bg-neutral-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md
+                prose-pre:bg-neutral-950 prose-pre:rounded-lg prose-pre:border prose-pre:border-neutral-800
+                prose-hr:border-neutral-100 dark:prose-hr:border-neutral-800/60">
                 <Content />
               </div>
             </section>

@@ -2,17 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
-html {
-  scroll-behavior: smooth;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    @apply bg-neutral-900 text-white dark:bg-white dark:text-neutral-900;
+  }
 }
 
-/* Scroll-spy active link */
-.toc-link.active {
-  @apply text-blue-600 dark:text-blue-400 font-semibold border-l-2 border-blue-600 dark:border-blue-400;
-}
-
+/* ToC */
 .toc-link {
-  @apply block py-1 pl-3 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 border-l-2 border-transparent transition-colors;
+  @apply block py-1.5 text-[13px] text-neutral-400 dark:text-neutral-500
+         hover:text-neutral-900 dark:hover:text-neutral-200
+         transition-colors duration-150;
+}
+
+.toc-link.active {
+  @apply text-neutral-900 dark:text-neutral-100;
 }
 
 /* Comparison table sticky first column */
@@ -24,14 +34,14 @@ html {
 }
 
 .comparison-table td:first-child {
-  @apply bg-white dark:bg-gray-900;
+  @apply bg-white dark:bg-[#0a0a0a];
 }
 
 .comparison-table th:first-child {
-  @apply bg-gray-50 dark:bg-gray-800;
+  @apply bg-neutral-50 dark:bg-neutral-900;
 }
 
-/* Anchor offset for sticky header */
+/* Anchor offset */
 section[id] {
   scroll-margin-top: 2rem;
 }
