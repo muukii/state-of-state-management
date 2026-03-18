@@ -7,89 +7,89 @@ order: 5
 <table class="comparison-table min-w-[800px] w-full text-sm">
 <thead>
 <tr>
-<th class="text-left p-2 border-b-2 border-gray-300 bg-gray-50 font-semibold"></th>
-<th class="text-left p-2 border-b-2 border-gray-300 bg-gray-50 font-semibold">Zustand</th>
-<th class="text-left p-2 border-b-2 border-gray-300 bg-gray-50 font-semibold">Jotai</th>
-<th class="text-left p-2 border-b-2 border-gray-300 bg-gray-50 font-semibold">TanStack Store</th>
-<th class="text-left p-2 border-b-2 border-gray-300 bg-gray-50 font-semibold">swift-state-graph</th>
-<th class="text-left p-2 border-b-2 border-gray-300 bg-gray-50 font-semibold">Compose derivedStateOf</th>
+<th class="text-left p-2 border-b-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 font-semibold"></th>
+<th class="text-left p-2 border-b-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 font-semibold">Zustand</th>
+<th class="text-left p-2 border-b-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 font-semibold">Jotai</th>
+<th class="text-left p-2 border-b-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 font-semibold">TanStack Store</th>
+<th class="text-left p-2 border-b-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 font-semibold">swift-state-graph</th>
+<th class="text-left p-2 border-b-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 font-semibold">Compose derivedStateOf</th>
 </tr>
 </thead>
 <tbody>
-<tr class="border-b border-gray-100">
-<td class="p-2 font-medium text-gray-700">Paradigm</td>
+<tr class="border-b border-gray-100 dark:border-gray-800">
+<td class="p-2 font-medium text-gray-700 dark:text-gray-300">Paradigm</td>
 <td class="p-2">Subscription</td>
 <td class="p-2">Graph</td>
 <td class="p-2">Graph</td>
 <td class="p-2">Graph</td>
 <td class="p-2">Graph (UI layer)</td>
 </tr>
-<tr class="border-b border-gray-100 bg-gray-50/50">
-<td class="p-2 font-medium text-gray-700">Dep. Tracking</td>
+<tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
+<td class="p-2 font-medium text-gray-700 dark:text-gray-300">Dep. Tracking</td>
 <td class="p-2">None (selectors)</td>
 <td class="p-2">Auto / implicit</td>
 <td class="p-2">Explicit (deps)</td>
 <td class="p-2">Auto / implicit</td>
 <td class="p-2">Auto / implicit</td>
 </tr>
-<tr class="border-b border-gray-100">
-<td class="p-2 font-medium text-gray-700">Primitive</td>
+<tr class="border-b border-gray-100 dark:border-gray-800">
+<td class="p-2 font-medium text-gray-700 dark:text-gray-300">Primitive</td>
 <td class="p-2">Single Store</td>
 <td class="p-2">Atom (distributed)</td>
 <td class="p-2">Store + Derived + Effect</td>
 <td class="p-2">Stored + Computed</td>
 <td class="p-2">State + derivedStateOf</td>
 </tr>
-<tr class="border-b border-gray-100 bg-gray-50/50">
-<td class="p-2 font-medium text-gray-700">Design Dir.</td>
+<tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
+<td class="p-2 font-medium text-gray-700 dark:text-gray-300">Design Dir.</td>
 <td class="p-2">Top-down</td>
 <td class="p-2">Bottom-up</td>
 <td class="p-2">Top-down</td>
 <td class="p-2">Bottom-up</td>
 <td class="p-2">Top-down</td>
 </tr>
-<tr class="border-b border-gray-100">
-<td class="p-2 font-medium text-gray-700">Evaluation</td>
+<tr class="border-b border-gray-100 dark:border-gray-800">
+<td class="p-2 font-medium text-gray-700 dark:text-gray-300">Evaluation</td>
 <td class="p-2">Eager notify</td>
 <td class="p-2">On-demand</td>
 <td class="p-2">Lazy</td>
 <td class="p-2">Lazy invalidation</td>
 <td class="p-2">Conditional invalidation</td>
 </tr>
-<tr class="border-b border-gray-100 bg-gray-50/50">
-<td class="p-2 font-medium text-gray-700">Side Effects</td>
+<tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
+<td class="p-2 font-medium text-gray-700 dark:text-gray-300">Side Effects</td>
 <td class="p-2">Middleware</td>
 <td class="p-2">External libs</td>
 <td class="p-2">Effect class</td>
 <td class="p-2">withGraphTracking</td>
 <td class="p-2">LaunchedEffect</td>
 </tr>
-<tr class="border-b border-gray-100">
-<td class="p-2 font-medium text-gray-700">Persistence</td>
+<tr class="border-b border-gray-100 dark:border-gray-800">
+<td class="p-2 font-medium text-gray-700 dark:text-gray-300">Persistence</td>
 <td class="p-2">persist middleware</td>
 <td class="p-2">Plugin</td>
 <td class="p-2">Plugin</td>
 <td class="p-2">Native (Storage protocol)</td>
 <td class="p-2">—</td>
 </tr>
-<tr class="border-b border-gray-100 bg-gray-50/50">
-<td class="p-2 font-medium text-gray-700">Thread Safety</td>
+<tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
+<td class="p-2 font-medium text-gray-700 dark:text-gray-300">Thread Safety</td>
 <td class="p-2">— (JS)</td>
 <td class="p-2">— (JS)</td>
 <td class="p-2">— (JS)</td>
 <td class="p-2">Per-node lock</td>
 <td class="p-2">Snapshot system</td>
 </tr>
-<tr class="border-b border-gray-100">
-<td class="p-2 font-medium text-gray-700">Bundle Size</td>
+<tr class="border-b border-gray-100 dark:border-gray-800">
+<td class="p-2 font-medium text-gray-700 dark:text-gray-300">Bundle Size</td>
 <td class="p-2">~2KB</td>
 <td class="p-2">~3KB</td>
 <td class="p-2">~3KB</td>
 <td class="p-2">—</td>
 <td class="p-2">Built into Compose</td>
 </tr>
-<tr class="border-b border-gray-100 bg-gray-50/50">
-<td class="p-2 font-medium text-gray-700">Frameworks</td>
+<tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
+<td class="p-2 font-medium text-gray-700 dark:text-gray-300">Frameworks</td>
 <td class="p-2">React</td>
 <td class="p-2">React</td>
 <td class="p-2">React / Vue / Solid / Angular / Svelte</td>
@@ -97,7 +97,7 @@ order: 5
 <td class="p-2">Jetpack Compose</td>
 </tr>
 <tr>
-<td class="p-2 font-medium text-gray-700">Language</td>
+<td class="p-2 font-medium text-gray-700 dark:text-gray-300">Language</td>
 <td class="p-2">TypeScript</td>
 <td class="p-2">TypeScript</td>
 <td class="p-2">TypeScript</td>
