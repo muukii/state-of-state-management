@@ -1,0 +1,76 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import TableOfContents from '../components/TableOfContents.astro';
+
+const allSections = await getCollection('sections');
+const sorted = allSections.sort((a, b) => a.data.order - b.data.order);
+
+const rendered = await Promise.all(
+  sorted.map(async (section) => {
+    const { Content } = await section.render();
+    return {
+      id: section.slug,
+      title: section.data.title,
+      Content,
+    };
+  })
+);
+
+const tocItems = rendered.map(({ id, title }) => ({ id, title }));
+---
+
+<BaseLayout
+  title="State of State Management — The Rise of Graph-based Approaches"
+  description="Comparing state management architectures across Web, iOS, and Android — Push-based vs Graph-based paradigms in 2026."
+>
+  <Header />
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+    <div class="lg:grid lg:grid-cols-[220px_1fr] lg:gap-12">
+      <!-- Sidebar ToC (desktop) -->
+      <aside class="hidden lg:block">
+        <TableOfContents sections={tocItems} />
+      </aside>
+
+      <!-- Main content -->
+      <main class="min-w-0">
+        <!-- Mobile ToC -->
+        <div class="lg:hidden mb-8">
+          <details class="border border-gray-200 rounded-lg p-3">
+            <summary class="text-sm font-semibold text-gray-600 cursor-pointer">
+              Table of Contents
+            </summary>
+            <ul class="mt-2 space-y-1">
+              {tocItems.map(({ id, title }) => (
+                <li>
+                  <a href={`#${id}`} class="block py-1 text-sm text-gray-500 hover:text-gray-900">
+                    {title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </details>
+        </div>
+
+        <!-- Article sections -->
+        <article>
+          {rendered.map(({ id, title, Content }) => (
+            <section id={id} class="mb-12">
+              <h2 class="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b border-gray-200">
+                {title}
+              </h2>
+              <div class="prose prose-gray max-w-none prose-headings:scroll-mt-8 prose-code:before:content-none prose-code:after:content-none prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-pre:bg-gray-950 prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline">
+                <Content />
+              </div>
+            </section>
+          ))}
+        </article>
+      </main>
+    </div>
+  </div>
+
+  <Footer />
+</BaseLayout>

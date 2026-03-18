@@ -1,0 +1,12 @@
+---
+title: "Conclusion"
+order: 9
+---
+
+State management design broadly divides into **subscription-based** and **graph-based** approaches.
+
+**Subscription-based** (Zustand) continues to be widely used, leveraging simplicity and predictability as its strengths. For small to medium-sized applications, this approach is more than sufficient, and the low learning curve is a major advantage.
+
+**Graph-based** (Jotai, TanStack Store, swift-state-graph) becomes increasingly beneficial as state complexity grows. By automatically tracking dependencies, it reduces wiring costs and prevents unnecessary recalculations through fine-grained updates. On the web, Jotai realizes this approach; on iOS, swift-state-graph does the same; and on Android, Compose's `derivedStateOf` partially adopts it.
+
+The philosophy of **"automatically tracking dependencies and propagating state with minimal recalculation"** is becoming the shared direction of state management across platforms.

@@ -1,0 +1,64 @@
+---
+title: "Code Style Comparison"
+order: 6
+---
+
+Below is the same operation — **deriving `doubled` from `count`** — written in each library.
+
+### Zustand (Subscription / Selector)
+
+```typescript
+const useStore = create((set) => ({
+  count: 0,
+  increment: () => set((s) => ({ count: s.count + 1 })),
+}))
+
+// Derived value computed via selector on the component side
+const doubled = useStore((state) => state.count * 2)
+```
+
+### Jotai (Implicit Graph)
+
+```javascript
+const countAtom = atom(0)
+const doubledAtom = atom((get) => get(countAtom) * 2)
+// get() call auto-registers the dependency. No wiring needed.
+```
+
+### TanStack Store (Explicit Graph)
+
+```typescript
+const countStore = new Store(0)
+const doubled = new Derived({
+  deps: [countStore],          // ← Dependencies declared explicitly
+  fn: () => countStore.state * 2,
+})
+```
+
+### swift-state-graph (Swift Macros + Auto-tracking)
+
+```swift
+@GraphStored var count: Int = 0
+
+@GraphComputed var doubled: Int
+$doubled = .init { [$count] _ in
+  $count.wrappedValue * 2
+}
+```
+
+### Jetpack Compose (UI-layer Auto-tracking)
+
+```kotlin
+var count by remember { mutableIntStateOf(0) }
+val doubled by remember {
+  derivedStateOf { count * 2 }
+  // Reading count automatically registers the dependency
+}
+```
+
+### StateFlow combine (Android Manual Wiring)
+
+```kotlin
+val count = MutableStateFlow(0)
+val doubled = count.map { it * 2 }  // Dependency specified manually
+```

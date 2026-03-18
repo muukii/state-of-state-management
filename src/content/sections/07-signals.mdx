@@ -1,0 +1,16 @@
+---
+title: "Relationship with Signals"
+order: 7
+---
+
+In the web frontend world, the concept of **Signals** is rapidly gaining adoption — Angular (v16+), SolidJS, Vue 3 (ref/computed), and a TC39 standardization proposal are all advancing simultaneously from different directions.
+
+Signals and graph-based state management are **philosophically aligned**:
+
+- **Fine-grained change detection**: State changes propagate only to the affected scope
+- **Lazy evaluation**: Even when dependencies change, recalculation doesn't happen until the value is actually read
+- **Automatic dependency tracking**: The act of "reading" a value registers the dependency
+
+Jotai positions itself as delivering "a Signals-like development experience in React, within a declarative programming model." swift-state-graph follows the same lineage. TanStack Store is less implicit than Signals, but shares the goal of fine-grained updates.
+
+Zustand deliberately keeps its distance from this trend, centering its design on the principle of "don't make state management complicated."

@@ -1,0 +1,20 @@
+---
+title: "Push-based vs Graph-based"
+order: 2
+---
+
+### Push-based (The Traditional Mainstream)
+
+When state changes, **all subscribers are notified**. The developer must manually wire up which state depends on which.
+
+- Typical examples: StateFlow's `combine`, RxJS's `combineLatest`
+- As the app grows more complex, the number of wiring connections increases, making dependency tracking difficult
+- Representatives: ViewModel + StateFlow (Android), Redux (Web)
+
+### Graph-based (On the Rise)
+
+The runtime (or compiler) **automatically manages dependency relationships** between state nodes. The act of "reading" a state value itself registers the dependency, and changes propagate only to the affected scope.
+
+- Dependency graph is constructed automatically
+- Only the affected range is recalculated (fine-grained updates)
+- Representatives: Jotai (Web), swift-state-graph (iOS)

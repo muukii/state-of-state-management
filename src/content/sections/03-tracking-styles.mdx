@@ -1,0 +1,26 @@
+---
+title: "Three Styles of Dependency Tracking"
+order: 3
+---
+
+While "graph-based" is often used as a blanket term, the way dependencies are tracked differs significantly.
+
+### 1. Automatic / Implicit Tracking
+
+The act of "reading" a state node automatically registers a dependency. Developers don't need to think about dependency relationships at all.
+
+- **Jotai**: `atom(get => get(otherAtom))` — dependency tracked at `get()` call time
+- **swift-state-graph**: Uses ThreadLocal to observe access and automatically discover dependencies
+- **Jetpack Compose**: The Snapshot system tracks State reads within `derivedStateOf {}` blocks
+
+### 2. Explicit Tracking
+
+The developer declares which nodes are depended upon via a `deps` array. This avoids the implicitness of automatic tracking and keeps dependencies visible.
+
+- **TanStack Store**: `new Derived({ deps: [storeA, storeB], fn: ... })`
+
+### 3. No Tracking (Subscription-based)
+
+No dependency graph exists. The developer individually specifies "which changes to care about" using selectors.
+
+- **Zustand**: `useStore(state => state.count)` — compares the selector's return value with `Object.is`

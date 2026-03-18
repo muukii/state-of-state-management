@@ -1,0 +1,20 @@
+---
+title: "Why This Paradigm Is Spreading Now"
+order: 8
+---
+
+### Application Complexity
+
+As the number of states grows and their interdependencies multiply, the cost of manual wiring (`combine`, `combineLatest`, etc.) accumulates. Graph-based approaches attempt to solve this problem fundamentally through "automatic dependency tracking."
+
+### Performance Demands
+
+Fine-grained updates happen automatically, avoiding unnecessary re-renders and recalculations. This also serves as one answer to React's Context API problem, where "all components under a Provider re-render."
+
+### Affinity with Declarative UI
+
+SwiftUI, Jetpack Compose, and React are all declarative UI frameworks. Given the premise that "UI updates automatically when state changes," it's a natural extension for state interdependencies to also be tracked automatically.
+
+### Cross-platform Convergence
+
+Web (Jotai, Signals), iOS (swift-state-graph), and Android (Compose `derivedStateOf`) — different platforms are independently heading in the same direction. This should be understood not as a single library trend, but as a **paradigm shift across the entire state management domain**.
