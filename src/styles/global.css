@@ -14,6 +14,16 @@
   }
 }
 
+/* Floating nav */
+.floating-nav {
+  @apply fixed top-4 left-1/2 -translate-x-1/2 z-50
+         bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl
+         border border-neutral-200/60 dark:border-neutral-800/60
+         rounded-full px-5 py-2.5
+         shadow-[0_1px_3px_rgba(0,0,0,0.04)]
+         dark:shadow-[0_1px_3px_rgba(0,0,0,0.3)];
+}
+
 /* ToC */
 .toc-link {
   @apply block py-1.5 text-[13px] text-neutral-400 dark:text-neutral-500
@@ -41,7 +51,7 @@
   @apply bg-neutral-50 dark:bg-neutral-900;
 }
 
-/* Anchor offset */
+/* Anchor offset for floating nav */
 section[id] {
-  scroll-margin-top: 2rem;
+  scroll-margin-top: 5rem;
 }

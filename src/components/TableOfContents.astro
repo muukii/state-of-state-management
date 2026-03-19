@@ -6,7 +6,7 @@ interface Props {
 const { sections } = Astro.props;
 ---
 
-<nav id="toc" class="lg:sticky lg:top-12 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+<nav id="toc" class="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
   <ul class="space-y-0">
     {sections.map(({ id, title }) => (
       <li>
@@ -24,8 +24,7 @@ const { sections } = Astro.props;
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           document.querySelectorAll('.toc-link').forEach((l) => l.classList.remove('active'));
-          const id = entry.target.getAttribute('id');
-          document.querySelector(`.toc-link[data-toc-link="${id}"]`)?.classList.add('active');
+          document.querySelector(`.toc-link[data-toc-link="${entry.target.id}"]`)?.classList.add('active');
         }
       });
     },
