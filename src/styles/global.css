@@ -14,16 +14,6 @@
   }
 }
 
-/* Shiki dual theme: light colors are inline, dark colors are CSS vars */
-html.dark .astro-code {
-  color: var(--shiki-dark) !important;
-  background-color: var(--shiki-dark-bg) !important;
-}
-
-html.dark .astro-code span {
-  color: var(--shiki-dark) !important;
-}
-
 /* ToC */
 .toc-link {
   @apply block py-1.5 text-[13px] text-neutral-400 dark:text-neutral-500
