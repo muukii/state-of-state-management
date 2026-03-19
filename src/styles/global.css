@@ -14,17 +14,14 @@
   }
 }
 
-/* Shiki dual theme */
-.astro-code,
-.astro-code span {
-  color: var(--shiki-light) !important;
-  background-color: var(--shiki-light-bg) !important;
-}
-
-html.dark .astro-code,
-html.dark .astro-code span {
+/* Shiki dual theme: light colors are inline, dark colors are CSS vars */
+html.dark .astro-code {
   color: var(--shiki-dark) !important;
   background-color: var(--shiki-dark-bg) !important;
+}
+
+html.dark .astro-code span {
+  color: var(--shiki-dark) !important;
 }
 
 /* ToC */
