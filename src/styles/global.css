@@ -9,10 +9,6 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  body {
-    @apply bg-[#fcfcfc] dark:bg-[#0c0c0c];
-  }
-
   ::selection {
     @apply bg-neutral-900 text-white dark:bg-white dark:text-neutral-900;
   }
