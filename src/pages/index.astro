@@ -4,6 +4,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import TableOfContents from '../components/TableOfContents.astro';
+import Mermaid from '../components/Mermaid.astro';
 
 const allSections = await getCollection('sections');
 const sorted = allSections.sort((a, b) => a.data.order - b.data.order);
@@ -71,6 +72,38 @@ const tocItems = rendered.map(({ id, title }) => ({ id, title }));
                 prose-ul:my-4 prose-ol:my-4">
                 <Content />
               </div>
+
+              {/* Mermaid diagrams after Push vs Graph section */}
+              {id === '02-push-vs-graph' && (
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-10 not-prose">
+                  <div>
+                    <p class="text-[11px] font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">Push-based</p>
+                    <Mermaid chart={`
+graph TD
+  Store["🔄 Store"]
+  Store -->|notify| SubA["Sub A"]
+  Store -->|notify| SubB["Sub B"]
+  Store -->|notify| SubC["Sub C"]
+  SubA -->|"selector ✓"| RenderA["re-render"]
+  SubB -->|"selector ✗"| Skip["skip"]
+  SubC -->|"selector ✓"| RenderC["re-render"]
+`} />
+                  </div>
+                  <div>
+                    <p class="text-[11px] font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">Graph-based</p>
+                    <Mermaid chart={`
+graph TD
+  Count["count ●"]
+  User["user"]
+  Count --> Doubled["doubled"]
+  Count --> Filtered["filtered"]
+  User -.-> Greeting["greeting"]
+  Doubled --> RenderA["re-render"]
+  Filtered --> RenderB["re-render"]
+`} />
+                  </div>
+                </div>
+              )}
             </section>
           </>
         ))}
