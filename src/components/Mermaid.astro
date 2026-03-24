@@ -1,22 +1,26 @@
 ---
-import { renderMermaidSVG, THEMES } from 'beautiful-mermaid';
-
 interface Props {
   chart: string;
-  theme?: string;
   class?: string;
 }
 
-const { chart, theme = 'zinc-dark', class: className = '' } = Astro.props;
-const selectedTheme = THEMES[theme as keyof typeof THEMES] || THEMES['zinc-dark'];
-const svg = renderMermaidSVG(chart.trim(), selectedTheme);
+const { chart, class: className = '' } = Astro.props;
+const id = `mermaid-${Math.random().toString(36).slice(2, 9)}`;
 ---
 
-<div class:list={["mermaid-diagram rounded-xl overflow-hidden border border-neutral-200/60 dark:border-neutral-800/60", className]} set:html={svg} />
+<div class:list={["mermaid-diagram rounded-xl overflow-hidden border border-neutral-200/60 dark:border-neutral-800/60 bg-[#0c0c0c] p-6", className]}>
+  <pre class="mermaid" id={id} set:text={chart.trim()} />
+</div>
 
 <style>
-  .mermaid-diagram :global(svg) {
-    width: 100%;
+  .mermaid-diagram :global(.mermaid) {
+    display: flex;
+    justify-content: center;
+    background: transparent;
+    font-family: monospace;
+  }
+  .mermaid-diagram :global(.mermaid svg) {
+    max-width: 100%;
     height: auto;
   }
 </style>
