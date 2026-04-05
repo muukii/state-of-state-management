@@ -1,0 +1,10 @@
+---
+interface Props {
+  class?: string;
+}
+const { class: className = '' } = Astro.props;
+---
+
+<tbody class:list={['[&_tr:last-child]:border-0', className]}>
+  <slot />
+</tbody>

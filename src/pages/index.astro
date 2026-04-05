@@ -1,10 +1,17 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Header from '../components/Header.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import SidebarNav from '../components/SidebarNav.astro';
+import TocRail from '../components/TocRail.astro';
+import Hero from '../components/Hero.astro';
 import Footer from '../components/Footer.astro';
-import TableOfContents from '../components/TableOfContents.astro';
 import Mermaid from '../components/Mermaid.astro';
+import Separator from '../components/ui/Separator.astro';
+import Card from '../components/ui/Card.astro';
+import CardHeader from '../components/ui/CardHeader.astro';
+import CardTitle from '../components/ui/CardTitle.astro';
+import CardContent from '../components/ui/CardContent.astro';
 
 const allSections = await getCollection('sections');
 const sorted = allSections.sort((a, b) => a.data.order - b.data.order);
@@ -27,58 +34,63 @@ const tocItems = rendered.map(({ id, title }) => ({ id, title }));
   title="State of State Management"
   description="The rise of graph-based state management across Web, iOS, and Android."
 >
-  <TableOfContents sections={tocItems} />
-  <Header />
+  <SiteHeader />
 
-  <div class="lg:ml-[200px]">
-    <main class="max-w-2xl mx-auto px-6">
-      <!-- Mobile ToC -->
-      <details class="lg:hidden mb-10">
-        <summary class="text-[13px] font-medium text-neutral-400 dark:text-neutral-500 cursor-pointer hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors">
-          Contents
-        </summary>
-        <ul class="mt-3 space-y-1">
-          {tocItems.map(({ id, title }) => (
-            <li>
-              <a href={`#${id}`} class="block py-1.5 text-[13px] text-neutral-400 dark:text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors">
-                {title}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </details>
+  <div class="mx-auto flex max-w-screen-2xl gap-8 px-4 sm:px-6 lg:px-8">
+    <SidebarNav sections={tocItems} />
 
-      <!-- Article sections -->
-      <article>
-        {rendered.map(({ id, title, Content }, i) => (
-          <>
-            {i > 0 && <div class="section-divider" />}
-            <section id={id}>
-              <h2 class="text-xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100 mb-6">
-                {title}
-              </h2>
-              <div class="prose prose-neutral dark:prose-invert prose-base max-w-none
-                prose-headings:font-semibold prose-headings:tracking-tight prose-headings:scroll-mt-20
-                prose-h3:text-[17px] prose-h3:mt-10 prose-h3:mb-4
-                prose-h4:text-[15px] prose-h4:mt-8 prose-h4:mb-3
-                prose-p:leading-[1.8] prose-p:text-neutral-500 dark:prose-p:text-neutral-400
-                prose-li:text-neutral-500 dark:prose-li:text-neutral-400 prose-li:leading-[1.8]
-                prose-strong:text-neutral-700 dark:prose-strong:text-neutral-300 prose-strong:font-semibold
-                prose-a:text-neutral-900 dark:prose-a:text-neutral-200 prose-a:underline prose-a:decoration-neutral-200 dark:prose-a:decoration-neutral-700 prose-a:underline-offset-[3px] hover:prose-a:decoration-neutral-400
-                prose-code:before:content-none prose-code:after:content-none
-                prose-code:text-[13px] prose-code:font-normal prose-code:text-neutral-600 dark:prose-code:text-neutral-300 prose-code:bg-neutral-100 dark:prose-code:bg-neutral-800/80 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:border prose-code:border-neutral-200/80 dark:prose-code:border-neutral-700/50
-                prose-pre:rounded-xl prose-pre:border prose-pre:border-neutral-200/60 dark:prose-pre:border-neutral-800/60
-                prose-hr:hidden
-                prose-ul:my-4 prose-ol:my-4">
+    <main class="min-w-0 flex-1 py-10 lg:py-14">
+      <div class="mx-auto max-w-3xl">
+        <Hero />
+
+        <details class="lg:hidden mb-10 rounded-lg border border-border p-4">
+          <summary class="cursor-pointer text-sm font-medium text-foreground">
+            Contents
+          </summary>
+          <ul class="mt-3 flex flex-col gap-1">
+            {tocItems.map(({ id, title }) => (
+              <li>
+                <a
+                  href={`#${id}`}
+                  class="block rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                >
+                  {title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </details>
+
+        <article class="prose dark:prose-invert max-w-none
+          prose-headings:scroll-mt-20 prose-headings:tracking-tight
+          prose-h2:text-2xl prose-h2:font-semibold prose-h2:mt-0 prose-h2:mb-6
+          prose-h3:text-lg prose-h3:font-semibold prose-h3:mt-10 prose-h3:mb-4
+          prose-h4:text-base prose-h4:font-semibold prose-h4:mt-8 prose-h4:mb-3
+          prose-p:leading-7
+          prose-li:leading-7
+          prose-a:underline prose-a:underline-offset-4 prose-a:decoration-border hover:prose-a:decoration-foreground
+          prose-code:rounded prose-code:border prose-code:border-border prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:text-[0.85em] prose-code:font-normal prose-code:before:content-none prose-code:after:content-none
+          prose-pre:rounded-lg prose-pre:border prose-pre:border-border
+          prose-hr:hidden
+          prose-ul:my-4 prose-ol:my-4
+          prose-strong:font-semibold">
+          {rendered.map(({ id, title, Content }, i) => (
+            <>
+              {i > 0 && <Separator class="my-12 not-prose" />}
+              <section id={id} class="scroll-mt-20">
+                <h2>{title}</h2>
                 <Content />
-              </div>
 
-              {/* Mermaid diagrams after Push vs Graph section */}
-              {id === '02-push-vs-graph' && (
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-10 not-prose">
-                  <div>
-                    <p class="text-[11px] font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">Push-based</p>
-                    <Mermaid chart={`
+                {id === '02-push-vs-graph' && (
+                  <div class="not-prose mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                          Push-based
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Mermaid chart={`
 graph TD
   Store["🔄 Store"]
   Store -->|notify| SubA["Sub A"]
@@ -88,10 +100,16 @@ graph TD
   SubB -->|"selector ✗"| Skip["skip"]
   SubC -->|"selector ✓"| RenderC["re-render"]
 `} />
-                  </div>
-                  <div>
-                    <p class="text-[11px] font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">Graph-based</p>
-                    <Mermaid chart={`
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                          Graph-based
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Mermaid chart={`
 graph TD
   Count["count ●"]
   User["user"]
@@ -101,14 +119,18 @@ graph TD
   Doubled --> RenderA["re-render"]
   Filtered --> RenderB["re-render"]
 `} />
+                      </CardContent>
+                    </Card>
                   </div>
-                </div>
-              )}
-            </section>
-          </>
-        ))}
-      </article>
+                )}
+              </section>
+            </>
+          ))}
+        </article>
+      </div>
     </main>
+
+    <TocRail sections={tocItems} />
   </div>
 
   <Footer />

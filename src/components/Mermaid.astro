@@ -8,7 +8,7 @@ const { chart, class: className = '' } = Astro.props;
 const id = `mermaid-${Math.random().toString(36).slice(2, 9)}`;
 ---
 
-<div class:list={["mermaid-diagram rounded-xl overflow-hidden border border-neutral-200/60 dark:border-neutral-800/60 bg-[#0c0c0c] p-6", className]}>
+<div class:list={['mermaid-diagram overflow-hidden rounded-md bg-muted p-4', className]}>
   <pre class="mermaid" id={id} set:text={chart.trim()} />
 </div>
 
@@ -17,7 +17,7 @@ const id = `mermaid-${Math.random().toString(36).slice(2, 9)}`;
     display: flex;
     justify-content: center;
     background: transparent;
-    font-family: monospace;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
   }
   .mermaid-diagram :global(.mermaid svg) {
     max-width: 100%;

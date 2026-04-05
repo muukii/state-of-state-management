@@ -1,0 +1,13 @@
+---
+interface Props {
+  class?: string;
+  wrapperClass?: string;
+}
+const { class: className = '', wrapperClass = '' } = Astro.props;
+---
+
+<div class:list={['relative w-full overflow-auto', wrapperClass]}>
+  <table class:list={['w-full caption-bottom text-sm', className]}>
+    <slot />
+  </table>
+</div>

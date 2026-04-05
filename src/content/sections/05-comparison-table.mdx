@@ -3,106 +3,106 @@ title: "Comparison Table"
 order: 5
 ---
 
-<div class="overflow-x-auto -mx-4 sm:mx-0 rounded-xl border border-neutral-200/60 dark:border-neutral-800/60 bg-white dark:bg-[#111]">
-<table class="comparison-table min-w-[800px] w-full text-[13px]">
-<thead>
-<tr>
-<th class="text-left py-3 px-4 border-b border-neutral-200/60 dark:border-neutral-800/60 bg-neutral-50/80 dark:bg-neutral-900/50 font-medium text-neutral-400 dark:text-neutral-500"></th>
-<th class="text-left py-3 px-4 border-b border-neutral-200/60 dark:border-neutral-800/60 bg-neutral-50/80 dark:bg-neutral-900/50 font-medium text-neutral-400 dark:text-neutral-500">Zustand</th>
-<th class="text-left py-3 px-4 border-b border-neutral-200/60 dark:border-neutral-800/60 bg-neutral-50/80 dark:bg-neutral-900/50 font-medium text-neutral-400 dark:text-neutral-500">Jotai</th>
-<th class="text-left py-3 px-4 border-b border-neutral-200/60 dark:border-neutral-800/60 bg-neutral-50/80 dark:bg-neutral-900/50 font-medium text-neutral-400 dark:text-neutral-500">TanStack Store</th>
-<th class="text-left py-3 px-4 border-b border-neutral-200/60 dark:border-neutral-800/60 bg-neutral-50/80 dark:bg-neutral-900/50 font-medium text-neutral-400 dark:text-neutral-500">swift-state-graph</th>
-<th class="text-left py-3 px-4 border-b border-neutral-200/60 dark:border-neutral-800/60 bg-neutral-50/80 dark:bg-neutral-900/50 font-medium text-neutral-400 dark:text-neutral-500">Compose</th>
+<div class="not-prose my-6 w-full overflow-auto rounded-lg border border-border bg-card">
+<table class="sticky-first-col w-full min-w-[800px] caption-bottom text-sm">
+<thead class="[&_tr]:border-b">
+<tr class="border-b transition-colors">
+<th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground"></th>
+<th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Zustand</th>
+<th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Jotai</th>
+<th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">TanStack Store</th>
+<th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">swift-state-graph</th>
+<th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Compose</th>
 </tr>
 </thead>
-<tbody class="text-neutral-600 dark:text-neutral-400">
-<tr class="border-b border-neutral-100/80 dark:border-neutral-800/40">
-<td class="py-3 px-4 font-medium text-neutral-900 dark:text-neutral-200">Paradigm</td>
-<td class="py-3 px-4">Subscription</td>
-<td class="py-3 px-4">Graph</td>
-<td class="py-3 px-4">Graph</td>
-<td class="py-3 px-4">Graph</td>
-<td class="py-3 px-4">Graph (UI)</td>
+<tbody class="[&_tr:last-child]:border-0">
+<tr class="border-b transition-colors hover:bg-muted/50">
+<td class="p-4 align-middle font-medium text-foreground">Paradigm</td>
+<td class="p-4 align-middle text-muted-foreground">Subscription</td>
+<td class="p-4 align-middle text-muted-foreground">Graph</td>
+<td class="p-4 align-middle text-muted-foreground">Graph</td>
+<td class="p-4 align-middle text-muted-foreground">Graph</td>
+<td class="p-4 align-middle text-muted-foreground">Graph (UI)</td>
 </tr>
-<tr class="border-b border-neutral-100/80 dark:border-neutral-800/40">
-<td class="py-3 px-4 font-medium text-neutral-900 dark:text-neutral-200">Dep. Tracking</td>
-<td class="py-3 px-4">None (selectors)</td>
-<td class="py-3 px-4">Auto / implicit</td>
-<td class="py-3 px-4">Explicit (deps)</td>
-<td class="py-3 px-4">Auto / implicit</td>
-<td class="py-3 px-4">Auto / implicit</td>
+<tr class="border-b transition-colors hover:bg-muted/50">
+<td class="p-4 align-middle font-medium text-foreground">Dep. Tracking</td>
+<td class="p-4 align-middle text-muted-foreground">None (selectors)</td>
+<td class="p-4 align-middle text-muted-foreground">Auto / implicit</td>
+<td class="p-4 align-middle text-muted-foreground">Explicit (deps)</td>
+<td class="p-4 align-middle text-muted-foreground">Auto / implicit</td>
+<td class="p-4 align-middle text-muted-foreground">Auto / implicit</td>
 </tr>
-<tr class="border-b border-neutral-100/80 dark:border-neutral-800/40">
-<td class="py-3 px-4 font-medium text-neutral-900 dark:text-neutral-200">Primitive</td>
-<td class="py-3 px-4">Single Store</td>
-<td class="py-3 px-4">Atom</td>
-<td class="py-3 px-4">Store + Derived + Effect</td>
-<td class="py-3 px-4">Stored + Computed</td>
-<td class="py-3 px-4">State + derivedStateOf</td>
+<tr class="border-b transition-colors hover:bg-muted/50">
+<td class="p-4 align-middle font-medium text-foreground">Primitive</td>
+<td class="p-4 align-middle text-muted-foreground">Single Store</td>
+<td class="p-4 align-middle text-muted-foreground">Atom</td>
+<td class="p-4 align-middle text-muted-foreground">Store + Derived + Effect</td>
+<td class="p-4 align-middle text-muted-foreground">Stored + Computed</td>
+<td class="p-4 align-middle text-muted-foreground">State + derivedStateOf</td>
 </tr>
-<tr class="border-b border-neutral-100/80 dark:border-neutral-800/40">
-<td class="py-3 px-4 font-medium text-neutral-900 dark:text-neutral-200">Design Dir.</td>
-<td class="py-3 px-4">Top-down</td>
-<td class="py-3 px-4">Bottom-up</td>
-<td class="py-3 px-4">Top-down</td>
-<td class="py-3 px-4">Bottom-up</td>
-<td class="py-3 px-4">Top-down</td>
+<tr class="border-b transition-colors hover:bg-muted/50">
+<td class="p-4 align-middle font-medium text-foreground">Design Dir.</td>
+<td class="p-4 align-middle text-muted-foreground">Top-down</td>
+<td class="p-4 align-middle text-muted-foreground">Bottom-up</td>
+<td class="p-4 align-middle text-muted-foreground">Top-down</td>
+<td class="p-4 align-middle text-muted-foreground">Bottom-up</td>
+<td class="p-4 align-middle text-muted-foreground">Top-down</td>
 </tr>
-<tr class="border-b border-neutral-100/80 dark:border-neutral-800/40">
-<td class="py-3 px-4 font-medium text-neutral-900 dark:text-neutral-200">Evaluation</td>
-<td class="py-3 px-4">Eager notify</td>
-<td class="py-3 px-4">On-demand</td>
-<td class="py-3 px-4">Lazy</td>
-<td class="py-3 px-4">Lazy invalidation</td>
-<td class="py-3 px-4">Conditional</td>
+<tr class="border-b transition-colors hover:bg-muted/50">
+<td class="p-4 align-middle font-medium text-foreground">Evaluation</td>
+<td class="p-4 align-middle text-muted-foreground">Eager notify</td>
+<td class="p-4 align-middle text-muted-foreground">On-demand</td>
+<td class="p-4 align-middle text-muted-foreground">Lazy</td>
+<td class="p-4 align-middle text-muted-foreground">Lazy invalidation</td>
+<td class="p-4 align-middle text-muted-foreground">Conditional</td>
 </tr>
-<tr class="border-b border-neutral-100/80 dark:border-neutral-800/40">
-<td class="py-3 px-4 font-medium text-neutral-900 dark:text-neutral-200">Side Effects</td>
-<td class="py-3 px-4">Middleware</td>
-<td class="py-3 px-4">External libs</td>
-<td class="py-3 px-4">Effect class</td>
-<td class="py-3 px-4">withGraphTracking</td>
-<td class="py-3 px-4">LaunchedEffect</td>
+<tr class="border-b transition-colors hover:bg-muted/50">
+<td class="p-4 align-middle font-medium text-foreground">Side Effects</td>
+<td class="p-4 align-middle text-muted-foreground">Middleware</td>
+<td class="p-4 align-middle text-muted-foreground">External libs</td>
+<td class="p-4 align-middle text-muted-foreground">Effect class</td>
+<td class="p-4 align-middle text-muted-foreground">withGraphTracking</td>
+<td class="p-4 align-middle text-muted-foreground">LaunchedEffect</td>
 </tr>
-<tr class="border-b border-neutral-100/80 dark:border-neutral-800/40">
-<td class="py-3 px-4 font-medium text-neutral-900 dark:text-neutral-200">Persistence</td>
-<td class="py-3 px-4">Middleware</td>
-<td class="py-3 px-4">Plugin</td>
-<td class="py-3 px-4">Plugin</td>
-<td class="py-3 px-4">Native</td>
-<td class="py-3 px-4">--</td>
+<tr class="border-b transition-colors hover:bg-muted/50">
+<td class="p-4 align-middle font-medium text-foreground">Persistence</td>
+<td class="p-4 align-middle text-muted-foreground">Middleware</td>
+<td class="p-4 align-middle text-muted-foreground">Plugin</td>
+<td class="p-4 align-middle text-muted-foreground">Plugin</td>
+<td class="p-4 align-middle text-muted-foreground">Native</td>
+<td class="p-4 align-middle text-muted-foreground">--</td>
 </tr>
-<tr class="border-b border-neutral-100/80 dark:border-neutral-800/40">
-<td class="py-3 px-4 font-medium text-neutral-900 dark:text-neutral-200">Thread Safety</td>
-<td class="py-3 px-4">--</td>
-<td class="py-3 px-4">--</td>
-<td class="py-3 px-4">--</td>
-<td class="py-3 px-4">Per-node lock</td>
-<td class="py-3 px-4">Snapshot system</td>
+<tr class="border-b transition-colors hover:bg-muted/50">
+<td class="p-4 align-middle font-medium text-foreground">Thread Safety</td>
+<td class="p-4 align-middle text-muted-foreground">--</td>
+<td class="p-4 align-middle text-muted-foreground">--</td>
+<td class="p-4 align-middle text-muted-foreground">--</td>
+<td class="p-4 align-middle text-muted-foreground">Per-node lock</td>
+<td class="p-4 align-middle text-muted-foreground">Snapshot system</td>
 </tr>
-<tr class="border-b border-neutral-100/80 dark:border-neutral-800/40">
-<td class="py-3 px-4 font-medium text-neutral-900 dark:text-neutral-200">Size</td>
-<td class="py-3 px-4">~2 KB</td>
-<td class="py-3 px-4">~3 KB</td>
-<td class="py-3 px-4">~3 KB</td>
-<td class="py-3 px-4">--</td>
-<td class="py-3 px-4">Built-in</td>
+<tr class="border-b transition-colors hover:bg-muted/50">
+<td class="p-4 align-middle font-medium text-foreground">Size</td>
+<td class="p-4 align-middle text-muted-foreground">~2 KB</td>
+<td class="p-4 align-middle text-muted-foreground">~3 KB</td>
+<td class="p-4 align-middle text-muted-foreground">~3 KB</td>
+<td class="p-4 align-middle text-muted-foreground">--</td>
+<td class="p-4 align-middle text-muted-foreground">Built-in</td>
 </tr>
-<tr class="border-b border-neutral-100/80 dark:border-neutral-800/40">
-<td class="py-3 px-4 font-medium text-neutral-900 dark:text-neutral-200">Frameworks</td>
-<td class="py-3 px-4">React</td>
-<td class="py-3 px-4">React</td>
-<td class="py-3 px-4">Multi</td>
-<td class="py-3 px-4">SwiftUI / UIKit</td>
-<td class="py-3 px-4">Compose</td>
+<tr class="border-b transition-colors hover:bg-muted/50">
+<td class="p-4 align-middle font-medium text-foreground">Frameworks</td>
+<td class="p-4 align-middle text-muted-foreground">React</td>
+<td class="p-4 align-middle text-muted-foreground">React</td>
+<td class="p-4 align-middle text-muted-foreground">Multi</td>
+<td class="p-4 align-middle text-muted-foreground">SwiftUI / UIKit</td>
+<td class="p-4 align-middle text-muted-foreground">Compose</td>
 </tr>
-<tr>
-<td class="py-3 px-4 font-medium text-neutral-900 dark:text-neutral-200">Language</td>
-<td class="py-3 px-4">TypeScript</td>
-<td class="py-3 px-4">TypeScript</td>
-<td class="py-3 px-4">TypeScript</td>
-<td class="py-3 px-4">Swift 6</td>
-<td class="py-3 px-4">Kotlin</td>
+<tr class="transition-colors hover:bg-muted/50">
+<td class="p-4 align-middle font-medium text-foreground">Language</td>
+<td class="p-4 align-middle text-muted-foreground">TypeScript</td>
+<td class="p-4 align-middle text-muted-foreground">TypeScript</td>
+<td class="p-4 align-middle text-muted-foreground">TypeScript</td>
+<td class="p-4 align-middle text-muted-foreground">Swift 6</td>
+<td class="p-4 align-middle text-muted-foreground">Kotlin</td>
 </tr>
 </tbody>
 </table>

@@ -1,0 +1,10 @@
+---
+interface Props {
+  class?: string;
+}
+const { class: className = '' } = Astro.props;
+---
+
+<td class:list={['p-4 align-middle [&:has([role=checkbox])]:pr-0', className]}>
+  <slot />
+</td>
