@@ -1,26 +1,33 @@
 ---
+import { renderMermaidSVG } from 'beautiful-mermaid';
+
 interface Props {
   chart: string;
   class?: string;
 }
 
 const { chart, class: className = '' } = Astro.props;
-const id = `mermaid-${Math.random().toString(36).slice(2, 9)}`;
+
+const svg = renderMermaidSVG(chart.trim(), {
+  bg: 'hsl(var(--background))',
+  fg: 'hsl(var(--foreground))',
+  line: 'hsl(var(--muted-foreground))',
+  accent: 'hsl(var(--foreground))',
+  muted: 'hsl(var(--muted-foreground))',
+  surface: 'hsl(var(--muted))',
+  border: 'hsl(var(--border))',
+  font: 'JetBrains Mono, ui-monospace, monospace',
+  transparent: true,
+});
 ---
 
-<div class:list={['mermaid-diagram overflow-hidden rounded-md bg-muted p-4', className]}>
-  <pre class="mermaid" id={id} set:text={chart.trim()} />
-</div>
+<div class:list={['mermaid-diagram overflow-hidden rounded-md bg-muted p-4', className]} set:html={svg} />
 
 <style>
-  .mermaid-diagram :global(.mermaid) {
-    display: flex;
-    justify-content: center;
-    background: transparent;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
-  }
-  .mermaid-diagram :global(.mermaid svg) {
+  .mermaid-diagram :global(svg) {
     max-width: 100%;
     height: auto;
+    display: block;
+    margin-inline: auto;
   }
 </style>
