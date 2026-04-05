@@ -11,6 +11,16 @@ When state changes, **all subscribers are notified**. The developer must manuall
 - As the app grows more complex, the number of wiring connections increases, making dependency tracking difficult
 - Representatives: ViewModel + StateFlow (Android), Redux (Web)
 
+#### The Hidden Cost: Backpressure and Re-entrancy
+
+Push-based propagation tends to get complicated under the hood. Because an upstream change **synchronously drives** every downstream subscriber, the runtime has to answer hard questions:
+
+- **Re-entrancy / recursion**: If a subscriber emits a new value while it is still being notified, the notification stack can grow unboundedly and, in the worst case, blow the stack. To flatten this, libraries introduce a **trampoline** — a queue that serializes nested emissions so they run after the current notification unwinds. Rx's `CurrentThreadScheduler` (a.k.a. `TrampolineScheduler`) exists precisely for this reason.
+- **Glitches**: With multiple upstream sources (e.g. `combineLatest`), a downstream node can observe intermediate, inconsistent states before all updates have propagated. Avoiding glitches requires extra scheduling machinery.
+- **Backpressure**: When producers emit faster than consumers can handle, the system needs buffering, dropping, or throttling strategies. Reactive Streams, Flow, and RxJava all ship non-trivial backpressure protocols to cope with this.
+
+In short, *push* looks simple on the surface — "just notify everyone" — but correct implementations need schedulers, trampolines, and backpressure policies. Graph-based systems sidestep much of this complexity because the runtime owns the propagation order and can batch / deduplicate updates over the dependency graph.
+
 ### Graph-based (On the Rise)
 
 The runtime (or compiler) **automatically manages dependency relationships** between state nodes. The act of "reading" a state value itself registers the dependency, and changes propagate only to the affected scope.
