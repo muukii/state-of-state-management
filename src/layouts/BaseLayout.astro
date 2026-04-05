@@ -58,6 +58,8 @@ const favicon = `${base.replace(/\/$/, '')}/favicon.svg`;
         mermaid.initialize({
           startOnLoad: false,
           theme: 'base',
+          look: 'handDrawn',
+          handDrawnSeed: 1,
           themeVariables: {
             darkMode: isDark,
             background: bg,
