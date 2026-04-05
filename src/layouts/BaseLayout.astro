@@ -39,54 +39,5 @@ const favicon = `${base.replace(/\/$/, '')}/favicon.svg`;
   </head>
   <body class="min-h-screen bg-background font-sans text-foreground antialiased">
     <slot />
-    <script is:inline type="module">
-      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
-
-      const resolve = (name) => {
-        const val = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-        return val ? `hsl(${val})` : '';
-      };
-
-      const render = () => {
-        const isDark = document.documentElement.classList.contains('dark');
-        const bg = resolve('--background');
-        const fg = resolve('--foreground');
-        const muted = resolve('--muted');
-        const mutedFg = resolve('--muted-foreground');
-        const border = resolve('--border');
-
-        mermaid.initialize({
-          startOnLoad: false,
-          theme: 'base',
-          look: 'handDrawn',
-          handDrawnSeed: 1,
-          themeVariables: {
-            darkMode: isDark,
-            background: bg,
-            primaryColor: muted,
-            primaryTextColor: fg,
-            primaryBorderColor: border,
-            lineColor: mutedFg,
-            secondaryColor: muted,
-            tertiaryColor: muted,
-            fontFamily: 'JetBrains Mono, ui-monospace, monospace',
-            fontSize: '13px',
-          },
-        });
-
-        document.querySelectorAll('.mermaid').forEach((el) => {
-          el.removeAttribute('data-processed');
-          if (el.dataset.source) el.textContent = el.dataset.source;
-          else el.dataset.source = el.textContent;
-        });
-        mermaid.run({ querySelector: '.mermaid' });
-      };
-
-      render();
-      new MutationObserver(render).observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['class'],
-      });
-    </script>
   </body>
 </html>
