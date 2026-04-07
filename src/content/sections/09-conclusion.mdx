@@ -3,10 +3,10 @@ title: "Conclusion"
 order: 9
 ---
 
-State management design broadly divides into **subscription-based** and **graph-based** approaches.
+State management architecture should be understood along two independent axes:
 
-**Subscription-based** (Zustand) continues to be widely used, leveraging simplicity and predictability as its strengths. For small to medium-sized applications, this approach is more than sufficient, and the low learning curve is a major advantage.
+**Push vs Pull** determines how state changes flow to consumers. Push is explicit and structured; pull is fine-grained and lazy. Both are valid, and the choice depends on the application's needs and the team's priorities.
 
-**Graph-based** (Jotai, TanStack Store, swift-state-graph) becomes increasingly beneficial as state complexity grows. By automatically tracking dependencies, it reduces wiring costs and prevents unnecessary recalculations through fine-grained updates. On the web, Jotai realizes this approach; on iOS, swift-state-graph does the same; and on Android, Compose's `derivedStateOf` partially adopts it.
+**Graph-based dependency tracking** is a technique — not a paradigm. It addresses the universal need for derived state by managing dependencies as a DAG, reducing manual wiring. This technique is appearing across both push and pull systems, across Web, iOS, and Android.
 
-The philosophy of **"automatically tracking dependencies and propagating state with minimal recalculation"** is becoming the shared direction of state management across platforms.
+The real evolution is not "push to pull" but rather: **derived state dependency management is becoming increasingly automated**, regardless of whether the underlying architecture pushes or pulls.

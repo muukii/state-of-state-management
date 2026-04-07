@@ -3,9 +3,46 @@ title: "Code Style Comparison"
 order: 6
 ---
 
-Below is the same operation — **deriving `doubled` from `count`** — written in each library.
+The same operation — **deriving `doubled` from `count`** — across all libraries.
 
-### Zustand (Subscription / Selector)
+### Push-based Libraries
+
+#### Verge
+
+```swift
+struct MyState: Equatable {
+  var count: Int = 0
+}
+let store = Store<MyState, Never>(initialState: .init())
+store.commit { $0.count += 1 }
+
+// Derived state via pipeline
+let doubled = store.derived(.map(\.count).map { $0 * 2 })
+```
+
+#### TCA
+
+```swift
+@Reducer
+struct Counter {
+  struct State: Equatable {
+    var count = 0
+    var doubled: Int { count * 2 }  // Computed property on State
+  }
+  enum Action { case increment }
+  var body: some ReducerOf<Self> {
+    Reduce { state, action in
+      switch action {
+      case .increment:
+        state.count += 1
+        return .none
+      }
+    }
+  }
+}
+```
+
+#### Zustand (Subscription / Selector)
 
 ```typescript
 const useStore = create((set) => ({
@@ -17,15 +54,7 @@ const useStore = create((set) => ({
 const doubled = useStore((state) => state.count * 2)
 ```
 
-### Jotai (Implicit Graph)
-
-```javascript
-const countAtom = atom(0)
-const doubledAtom = atom((get) => get(countAtom) * 2)
-// get() call auto-registers the dependency. No wiring needed.
-```
-
-### TanStack Store (Explicit Graph)
+#### TanStack Store (Explicit Graph)
 
 ```typescript
 const countStore = new Store(0)
@@ -35,7 +64,17 @@ const doubled = new Derived({
 })
 ```
 
-### swift-state-graph (Swift Macros + Auto-tracking)
+### Pull-based Libraries
+
+#### Jotai (Implicit Graph)
+
+```javascript
+const countAtom = atom(0)
+const doubledAtom = atom((get) => get(countAtom) * 2)
+// get() call auto-registers the dependency. No wiring needed.
+```
+
+#### swift-state-graph (Swift Macros + Auto-tracking)
 
 ```swift
 @GraphStored var count: Int = 0
@@ -46,7 +85,7 @@ $doubled = .init { [$count] _ in
 }
 ```
 
-### Jetpack Compose (UI-layer Auto-tracking)
+#### Jetpack Compose (UI-layer Auto-tracking)
 
 ```kotlin
 var count by remember { mutableIntStateOf(0) }
@@ -56,7 +95,7 @@ val doubled by remember {
 }
 ```
 
-### StateFlow combine (Android Manual Wiring)
+#### StateFlow combine (Android Manual Wiring)
 
 ```kotlin
 val count = MutableStateFlow(0)

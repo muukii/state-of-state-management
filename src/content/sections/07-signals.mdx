@@ -3,14 +3,10 @@ title: "Relationship with Signals"
 order: 7
 ---
 
-In the web frontend world, the concept of **Signals** is rapidly gaining adoption — Angular (v16+), SolidJS, Vue 3 (ref/computed), and a TC39 standardization proposal are all advancing simultaneously from different directions.
+**Signals** — gaining adoption in Angular (v16+), SolidJS, Vue 3 (ref/computed), and the TC39 standardization proposal — are fundamentally a **pull-based, graph-tracked** approach:
 
-Signals and graph-based state management are **philosophically aligned**:
+- **Fine-grained change detection**: Changes propagate only to the affected scope
+- **Lazy evaluation**: Recalculation happens only when the value is read
+- **Automatic dependency tracking**: Reading a value registers the dependency
 
-- **Fine-grained change detection**: State changes propagate only to the affected scope
-- **Lazy evaluation**: Even when dependencies change, recalculation doesn't happen until the value is actually read
-- **Automatic dependency tracking**: The act of "reading" a value registers the dependency
-
-Jotai positions itself as delivering "a Signals-like development experience in React, within a declarative programming model." swift-state-graph follows the same lineage. TanStack Store is less implicit than Signals, but shares the goal of fine-grained updates.
-
-Zustand deliberately keeps its distance from this trend, centering its design on the principle of "don't make state management complicated."
+Jotai and swift-state-graph share this lineage. TanStack Store shares the fine-grained update goal but uses explicit rather than implicit tracking. Push-based libraries like Verge and TCA take a different path entirely — they optimize within the push model using techniques like `@Tracking` and reducer composition.

@@ -4,13 +4,15 @@ order: 5
 ---
 
 <div class="not-prose my-6 w-full overflow-auto rounded-lg border border-border bg-card">
-<table class="sticky-first-col w-full min-w-[800px] caption-bottom text-sm">
+<table class="sticky-first-col w-full min-w-[1000px] caption-bottom text-sm">
 <thead class="[&_tr]:border-b">
 <tr class="border-b transition-colors">
 <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground"></th>
+<th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Verge</th>
+<th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">TCA</th>
 <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Zustand</th>
-<th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Jotai</th>
 <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">TanStack Store</th>
+<th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Jotai</th>
 <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">swift-state-graph</th>
 <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Compose</th>
 </tr>
@@ -18,86 +20,98 @@ order: 5
 <tbody class="[&_tr:last-child]:border-0">
 <tr class="border-b transition-colors hover:bg-muted/50">
 <td class="p-4 align-middle font-medium text-foreground">Paradigm</td>
-<td class="p-4 align-middle text-muted-foreground">Subscription</td>
-<td class="p-4 align-middle text-muted-foreground">Graph</td>
-<td class="p-4 align-middle text-muted-foreground">Graph</td>
-<td class="p-4 align-middle text-muted-foreground">Graph</td>
-<td class="p-4 align-middle text-muted-foreground">Graph (UI)</td>
+<td class="p-4 align-middle text-muted-foreground">Push</td>
+<td class="p-4 align-middle text-muted-foreground">Push</td>
+<td class="p-4 align-middle text-muted-foreground">Push</td>
+<td class="p-4 align-middle text-muted-foreground">Push</td>
+<td class="p-4 align-middle text-muted-foreground">Pull</td>
+<td class="p-4 align-middle text-muted-foreground">Pull</td>
+<td class="p-4 align-middle text-muted-foreground">Pull (UI)</td>
 </tr>
 <tr class="border-b transition-colors hover:bg-muted/50">
-<td class="p-4 align-middle font-medium text-foreground">Dep. Tracking</td>
-<td class="p-4 align-middle text-muted-foreground">None (selectors)</td>
-<td class="p-4 align-middle text-muted-foreground">Auto / implicit</td>
-<td class="p-4 align-middle text-muted-foreground">Explicit (deps)</td>
-<td class="p-4 align-middle text-muted-foreground">Auto / implicit</td>
-<td class="p-4 align-middle text-muted-foreground">Auto / implicit</td>
+<td class="p-4 align-middle font-medium text-foreground">Graph</td>
+<td class="p-4 align-middle text-muted-foreground">Derived pipeline</td>
+<td class="p-4 align-middle text-muted-foreground">None</td>
+<td class="p-4 align-middle text-muted-foreground">None</td>
+<td class="p-4 align-middle text-muted-foreground">Explicit deps</td>
+<td class="p-4 align-middle text-muted-foreground">Implicit auto</td>
+<td class="p-4 align-middle text-muted-foreground">Implicit auto</td>
+<td class="p-4 align-middle text-muted-foreground">Implicit auto</td>
 </tr>
 <tr class="border-b transition-colors hover:bg-muted/50">
 <td class="p-4 align-middle font-medium text-foreground">Primitive</td>
+<td class="p-4 align-middle text-muted-foreground">Store + Commit</td>
+<td class="p-4 align-middle text-muted-foreground">Store + Reducer</td>
 <td class="p-4 align-middle text-muted-foreground">Single Store</td>
-<td class="p-4 align-middle text-muted-foreground">Atom</td>
 <td class="p-4 align-middle text-muted-foreground">Store + Derived + Effect</td>
+<td class="p-4 align-middle text-muted-foreground">Atom</td>
 <td class="p-4 align-middle text-muted-foreground">Stored + Computed</td>
 <td class="p-4 align-middle text-muted-foreground">State + derivedStateOf</td>
 </tr>
 <tr class="border-b transition-colors hover:bg-muted/50">
-<td class="p-4 align-middle font-medium text-foreground">Design Dir.</td>
-<td class="p-4 align-middle text-muted-foreground">Top-down</td>
-<td class="p-4 align-middle text-muted-foreground">Bottom-up</td>
-<td class="p-4 align-middle text-muted-foreground">Top-down</td>
-<td class="p-4 align-middle text-muted-foreground">Bottom-up</td>
-<td class="p-4 align-middle text-muted-foreground">Top-down</td>
+<td class="p-4 align-middle font-medium text-foreground">Derived State</td>
+<td class="p-4 align-middle text-muted-foreground">Derived&lt;T&gt; pipeline</td>
+<td class="p-4 align-middle text-muted-foreground">Computed in reducer</td>
+<td class="p-4 align-middle text-muted-foreground">Selector</td>
+<td class="p-4 align-middle text-muted-foreground">Derived class</td>
+<td class="p-4 align-middle text-muted-foreground">atom(get =&gt; ...)</td>
+<td class="p-4 align-middle text-muted-foreground">@GraphComputed</td>
+<td class="p-4 align-middle text-muted-foreground">derivedStateOf {}</td>
+</tr>
+<tr class="border-b transition-colors hover:bg-muted/50">
+<td class="p-4 align-middle font-medium text-foreground">Dep. Tracking</td>
+<td class="p-4 align-middle text-muted-foreground">@Tracking + ifChanged</td>
+<td class="p-4 align-middle text-muted-foreground">Manual</td>
+<td class="p-4 align-middle text-muted-foreground">Selector equality</td>
+<td class="p-4 align-middle text-muted-foreground">Explicit deps array</td>
+<td class="p-4 align-middle text-muted-foreground">Auto (get())</td>
+<td class="p-4 align-middle text-muted-foreground">Auto (ThreadLocal)</td>
+<td class="p-4 align-middle text-muted-foreground">Auto (Snapshot)</td>
 </tr>
 <tr class="border-b transition-colors hover:bg-muted/50">
 <td class="p-4 align-middle font-medium text-foreground">Evaluation</td>
-<td class="p-4 align-middle text-muted-foreground">Eager notify</td>
+<td class="p-4 align-middle text-muted-foreground">Eager (push)</td>
+<td class="p-4 align-middle text-muted-foreground">Eager (push)</td>
+<td class="p-4 align-middle text-muted-foreground">Eager (notify all)</td>
+<td class="p-4 align-middle text-muted-foreground">Lazy (on access)</td>
 <td class="p-4 align-middle text-muted-foreground">On-demand</td>
-<td class="p-4 align-middle text-muted-foreground">Lazy</td>
 <td class="p-4 align-middle text-muted-foreground">Lazy invalidation</td>
 <td class="p-4 align-middle text-muted-foreground">Conditional</td>
 </tr>
 <tr class="border-b transition-colors hover:bg-muted/50">
-<td class="p-4 align-middle font-medium text-foreground">Side Effects</td>
+<td class="p-4 align-middle font-medium text-foreground">Composition</td>
+<td class="p-4 align-middle text-muted-foreground">Store scoping</td>
+<td class="p-4 align-middle text-muted-foreground">Reducer composition</td>
 <td class="p-4 align-middle text-muted-foreground">Middleware</td>
-<td class="p-4 align-middle text-muted-foreground">External libs</td>
-<td class="p-4 align-middle text-muted-foreground">Effect class</td>
-<td class="p-4 align-middle text-muted-foreground">withGraphTracking</td>
-<td class="p-4 align-middle text-muted-foreground">LaunchedEffect</td>
-</tr>
-<tr class="border-b transition-colors hover:bg-muted/50">
-<td class="p-4 align-middle font-medium text-foreground">Persistence</td>
-<td class="p-4 align-middle text-muted-foreground">Middleware</td>
-<td class="p-4 align-middle text-muted-foreground">Plugin</td>
-<td class="p-4 align-middle text-muted-foreground">Plugin</td>
-<td class="p-4 align-middle text-muted-foreground">Native</td>
-<td class="p-4 align-middle text-muted-foreground">--</td>
+<td class="p-4 align-middle text-muted-foreground">Framework adapters</td>
+<td class="p-4 align-middle text-muted-foreground">Atom composition</td>
+<td class="p-4 align-middle text-muted-foreground">Node graph</td>
+<td class="p-4 align-middle text-muted-foreground">Compose tree</td>
 </tr>
 <tr class="border-b transition-colors hover:bg-muted/50">
 <td class="p-4 align-middle font-medium text-foreground">Thread Safety</td>
-<td class="p-4 align-middle text-muted-foreground">--</td>
-<td class="p-4 align-middle text-muted-foreground">--</td>
-<td class="p-4 align-middle text-muted-foreground">--</td>
+<td class="p-4 align-middle text-muted-foreground">swift-atomics</td>
+<td class="p-4 align-middle text-muted-foreground">MainActor</td>
+<td class="p-4 align-middle text-muted-foreground">-- (JS)</td>
+<td class="p-4 align-middle text-muted-foreground">-- (JS)</td>
+<td class="p-4 align-middle text-muted-foreground">-- (JS)</td>
 <td class="p-4 align-middle text-muted-foreground">Per-node lock</td>
 <td class="p-4 align-middle text-muted-foreground">Snapshot system</td>
 </tr>
 <tr class="border-b transition-colors hover:bg-muted/50">
-<td class="p-4 align-middle font-medium text-foreground">Size</td>
-<td class="p-4 align-middle text-muted-foreground">~2 KB</td>
-<td class="p-4 align-middle text-muted-foreground">~3 KB</td>
-<td class="p-4 align-middle text-muted-foreground">~3 KB</td>
-<td class="p-4 align-middle text-muted-foreground">--</td>
-<td class="p-4 align-middle text-muted-foreground">Built-in</td>
-</tr>
-<tr class="border-b transition-colors hover:bg-muted/50">
 <td class="p-4 align-middle font-medium text-foreground">Frameworks</td>
-<td class="p-4 align-middle text-muted-foreground">React</td>
+<td class="p-4 align-middle text-muted-foreground">SwiftUI / UIKit</td>
+<td class="p-4 align-middle text-muted-foreground">SwiftUI</td>
 <td class="p-4 align-middle text-muted-foreground">React</td>
 <td class="p-4 align-middle text-muted-foreground">Multi</td>
+<td class="p-4 align-middle text-muted-foreground">React</td>
 <td class="p-4 align-middle text-muted-foreground">SwiftUI / UIKit</td>
 <td class="p-4 align-middle text-muted-foreground">Compose</td>
 </tr>
 <tr class="transition-colors hover:bg-muted/50">
 <td class="p-4 align-middle font-medium text-foreground">Language</td>
+<td class="p-4 align-middle text-muted-foreground">Swift</td>
+<td class="p-4 align-middle text-muted-foreground">Swift</td>
 <td class="p-4 align-middle text-muted-foreground">TypeScript</td>
 <td class="p-4 align-middle text-muted-foreground">TypeScript</td>
 <td class="p-4 align-middle text-muted-foreground">TypeScript</td>

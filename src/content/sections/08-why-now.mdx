@@ -1,20 +1,61 @@
 ---
-title: "Why This Paradigm Is Spreading Now"
+title: "Why Both Approaches Coexist"
 order: 8
 ---
 
-### Application Complexity
+### Push excels at...
 
-As the number of states grows and their interdependencies multiply, the cost of manual wiring (`combine`, `combineLatest`, etc.) accumulates. Graph-based approaches attempt to solve this problem fundamentally through "automatic dependency tracking."
+- **Predictability**: All state changes flow through explicit paths (actions, commits)
+- **Debugging**: Easy to trace what changed and why (action logs, middleware)
+- **Structure**: Enforces architectural patterns (unidirectional flow, reducer composition)
+- **Familiarity**: The dominant model in most ecosystems (Redux, MVI, MVVM)
 
-### Performance Demands
+### Pull excels at...
 
-Fine-grained updates happen automatically, avoiding unnecessary re-renders and recalculations. This also serves as one answer to React's Context API problem, where "all components under a Provider re-render."
+- **Fine-grained updates**: Only the exact consumers of changed state are invalidated
+- **Reduced boilerplate**: No manual wiring of dependencies
+- **Dynamic dependencies**: Dependencies can change based on runtime conditions
+- **Scalability of derived state**: Adding a new derived value doesn't require modifying existing wiring
 
-### Affinity with Declarative UI
+### The real question isn't "which is better"
 
-SwiftUI, Jetpack Compose, and React are all declarative UI frameworks. Given the premise that "UI updates automatically when state changes," it's a natural extension for state interdependencies to also be tracked automatically.
+Both push and pull architectures need derived state. The question is whether the **dependency tracking for that derived state** should be:
 
-### Cross-platform Convergence
+1. **Manual** — the developer wires it (StateFlow `combine`, Zustand selectors)
+2. **Declarative** — the developer declares it (TanStack Store `deps`, Verge `Derived`)
+3. **Automatic** — the runtime discovers it (Jotai `get()`, swift-state-graph ThreadLocal, Compose Snapshot)
 
-Web (Jotai, Signals), iOS (swift-state-graph), and Android (Compose `derivedStateOf`) — different platforms are independently heading in the same direction. This should be understood not as a single library trend, but as a **paradigm shift across the entire state management domain**.
+Graph-based tracking (options 2 and 3) reduces the manual wiring cost. It can be applied within a push architecture (Verge, TanStack Store) or as the foundation of a pull architecture (Jotai, swift-state-graph).
+
+### Cross-platform Summary
+
+<div class="not-prose my-6 w-full overflow-auto rounded-lg border border-border bg-card">
+<table class="w-full min-w-[600px] caption-bottom text-sm">
+<thead class="[&_tr]:border-b">
+<tr class="border-b transition-colors">
+<th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Platform</th>
+<th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Push-based (Mainstream)</th>
+<th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Pull-based / Graph (Emerging)</th>
+</tr>
+</thead>
+<tbody class="[&_tr:last-child]:border-0">
+<tr class="border-b transition-colors hover:bg-muted/50">
+<td class="p-4 align-middle font-medium text-foreground">Web</td>
+<td class="p-4 align-middle text-muted-foreground">Redux, Zustand</td>
+<td class="p-4 align-middle text-muted-foreground">Jotai, Signals, TanStack Store (push+graph)</td>
+</tr>
+<tr class="border-b transition-colors hover:bg-muted/50">
+<td class="p-4 align-middle font-medium text-foreground">iOS</td>
+<td class="p-4 align-middle text-muted-foreground">Verge, TCA</td>
+<td class="p-4 align-middle text-muted-foreground">swift-state-graph</td>
+</tr>
+<tr class="transition-colors hover:bg-muted/50">
+<td class="p-4 align-middle font-medium text-foreground">Android</td>
+<td class="p-4 align-middle text-muted-foreground">ViewModel + StateFlow</td>
+<td class="p-4 align-middle text-muted-foreground">Compose derivedStateOf (UI layer only)</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+The trend is not a wholesale shift from push to pull. Rather, **graph-based dependency tracking for derived state** is being adopted across paradigms — sometimes within push systems (Verge's `Derived`, TanStack Store), sometimes as the core of pull systems (Jotai, swift-state-graph), and sometimes within the UI framework itself (Compose, Signals).

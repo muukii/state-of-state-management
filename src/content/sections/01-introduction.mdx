@@ -3,6 +3,11 @@ title: "Introduction"
 order: 1
 ---
 
-In frontend and mobile development, the question of **how to manage state dependencies** is once again in the spotlight. Against the backdrop of traditional **push-based** state management — exemplified by ViewModels and simple stores — a new paradigm is gaining traction across platforms: **graph-based** state management, which automatically manages dependencies as a directed acyclic graph (DAG).
+In frontend and mobile development, the question of **how to manage state** continues to evolve. This report organizes the landscape along two independent axes:
+
+1. **Push vs Pull** — how state changes flow to consumers
+2. **Graph-based dependency tracking** — a technique for managing derived state, applicable to either push or pull systems
+
+Push and Pull describe the **direction of data flow**. Graph describes **how derived state dependencies are managed** — and it can appear in both push and pull architectures.
 
 This report compares the design philosophies, internal architectures, and code styles of major libraries across Web, iOS, and Android.

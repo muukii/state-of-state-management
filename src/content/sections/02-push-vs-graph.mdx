@@ -1,30 +1,133 @@
 ---
-title: "Push-based vs Graph-based"
+title: "Push vs Pull"
 order: 2
 ---
 
-### Push-based (The Traditional Mainstream)
+### Push-based
 
-When state changes, **all subscribers are notified**. The developer must manually wire up which state depends on which.
+The source of truth actively **pushes** state changes to subscribers. When a mutation occurs, all registered listeners are notified immediately.
 
-- Typical examples: StateFlow's `combine`, RxJS's `combineLatest`
-- As the app grows more complex, the number of wiring connections increases, making dependency tracking difficult
-- Representatives: ViewModel + StateFlow (Android), Redux (Web)
+- The store owns the notification responsibility
+- Subscribers are passive recipients
+- Derived state is typically computed eagerly when source state changes
+- Representatives: **Verge**, **TCA**, **Zustand**, **Redux**, ViewModel + StateFlow
 
-#### The Hidden Cost: Backpressure and Re-entrancy
+### Pull-based
 
-Push-based propagation tends to get complicated under the hood. Because an upstream change **synchronously drives** every downstream subscriber, the runtime has to answer hard questions:
+Consumers **pull** (read) state on demand. The system tracks what was accessed and recalculates only when needed.
 
-- **Re-entrancy / recursion**: If a subscriber emits a new value while it is still being notified, the notification stack can grow unboundedly and, in the worst case, blow the stack. To flatten this, libraries introduce a **trampoline** — a queue that serializes nested emissions so they run after the current notification unwinds. Rx's `CurrentThreadScheduler` (a.k.a. `TrampolineScheduler`) exists precisely for this reason.
-- **Glitches**: With multiple upstream sources (e.g. `combineLatest`), a downstream node can observe intermediate, inconsistent states before all updates have propagated. Avoiding glitches requires extra scheduling machinery.
-- **Backpressure**: When producers emit faster than consumers can handle, the system needs buffering, dropping, or throttling strategies. Reactive Streams, Flow, and RxJava all ship non-trivial backpressure protocols to cope with this.
+- Consumers drive computation by accessing values
+- Derived state is evaluated lazily — only when read
+- The system must track "who read what" to know when to invalidate
+- Representatives: **Jotai**, **swift-state-graph**, **Signals** (SolidJS, Angular, Vue)
 
-In short, *push* looks simple on the surface — "just notify everyone" — but correct implementations need schedulers, trampolines, and backpressure policies. Graph-based systems sidestep much of this complexity because the runtime owns the propagation order and can batch / deduplicate updates over the dependency graph.
+### The Key Difference
 
-### Graph-based (On the Rise)
+In a push system, the producer says: *"I changed — everyone, here's the new value."*
+In a pull system, the consumer says: *"I need this value — let me check if it's still valid."*
 
-The runtime (or compiler) **automatically manages dependency relationships** between state nodes. The act of "reading" a state value itself registers the dependency, and changes propagate only to the affected scope.
+Both approaches are valid. Push systems are simpler to reason about and debug. Pull systems offer finer-grained update control and avoid unnecessary computations.
 
-- Dependency graph is constructed automatically
-- Only the affected range is recalculated (fine-grained updates)
-- Representatives: Jotai (Web), swift-state-graph (iOS)
+### Inherent Challenges of Push-based Systems
+
+Push-based architectures — where the store immediately pushes the latest value to all subscribers on every mutation — carry several non-trivial challenges that grow with application complexity.
+
+#### Backpressure
+
+When the producer mutates state faster than consumers can process, push systems have no built-in mechanism to throttle the flow. Every `setState` / `commit` immediately triggers notification to all subscribers.
+
+In practice, this manifests as:
+- Rapid successive mutations flooding the UI with intermediate states
+- Subscribers receiving values they never have time to render before the next one arrives
+- Performance degradation under high-frequency updates (e.g., drag gestures, real-time data streams)
+
+Solutions like `batch()` (TanStack Store), debouncing, or `conflate` (Kotlin Flow) are workarounds — they add complexity to compensate for what is fundamentally a producer-driven flow control problem.
+
+Pull-based systems sidestep this entirely: since derived values are only computed when read, intermediate mutations are naturally coalesced. The consumer only ever sees the latest value at the time of access.
+
+#### Recursive / Reentrant Updates
+
+When a state change notification triggers a subscriber that itself mutates state, a recursive cycle can occur:
+
+```
+State A changes → notify subscriber → subscriber mutates State B
+→ notify subscriber → subscriber mutates State A → ...
+```
+
+This is a fundamental problem of synchronous push notification. If subscriber callbacks are invoked inline during `setState`, a mutation inside a callback can trigger another round of notifications **on the same call stack**, leading to:
+
+- **Stack overflow** from deeply nested notification chains
+- **Inconsistent intermediate states** observed by subscribers mid-cascade
+- **Glitches** where a subscriber sees a partially-updated world (State A is new, State B is still old)
+
+#### The Need for Trampolining
+
+To prevent stack overflow from recursive dispatch, push-based systems often employ a **trampoline** — a mechanism that defers nested state updates instead of executing them immediately on the same call stack.
+
+The pattern works like this:
+
+1. A mutation begins → notifications are dispatched
+2. If a subscriber triggers another mutation during notification, the new mutation is **queued** instead of executed immediately
+3. After the current notification round completes, the queue is drained
+4. This continues until the queue is empty
+
+TCA implements this via action buffering — actions sent during reducer execution are enqueued and processed sequentially. Verge processes commits synchronously but relies on Swift's actor isolation to prevent reentrant access. Redux enforces the rule that dispatching inside a reducer is an error.
+
+The trampoline adds correctness but also adds complexity and indirection. The developer must reason about **when** a state change actually takes effect — it may not be immediate if it was enqueued.
+
+#### The Glitch Problem
+
+In a push system with derived state, there is a window during cascading updates where some derived values reflect the new source state and others still reflect the old one. This is known as **glitching**.
+
+```
+Source A changes → Derived X (depends on A, B) is recomputed with new A, old B
+                 → Derived Y (depends on A) is recomputed with new A
+                 → Source B changes → Derived X is recomputed again with new A, new B
+```
+
+Derived X was briefly in an inconsistent state — computed from a mix of old and new values. In UI applications, this can cause visual flickering or briefly incorrect displays.
+
+Pull-based systems with lazy evaluation avoid this: since derived values are only computed on access (after all source mutations are complete), they always see a consistent snapshot of their dependencies.
+
+#### Summary of Push Challenges
+
+<div class="not-prose my-6 w-full overflow-auto rounded-lg border border-border bg-card">
+<table class="w-full min-w-[700px] caption-bottom text-sm">
+<thead class="[&_tr]:border-b">
+<tr class="border-b transition-colors">
+<th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Challenge</th>
+<th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Cause</th>
+<th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Typical Workaround</th>
+<th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Pull-based Equivalent</th>
+</tr>
+</thead>
+<tbody class="[&_tr:last-child]:border-0">
+<tr class="border-b transition-colors hover:bg-muted/50">
+<td class="p-4 align-middle font-medium text-foreground">Backpressure</td>
+<td class="p-4 align-middle text-muted-foreground">Producer faster than consumer</td>
+<td class="p-4 align-middle text-muted-foreground">batch, debounce, conflate</td>
+<td class="p-4 align-middle text-muted-foreground">N/A (lazy by nature)</td>
+</tr>
+<tr class="border-b transition-colors hover:bg-muted/50">
+<td class="p-4 align-middle font-medium text-foreground">Recursive dispatch</td>
+<td class="p-4 align-middle text-muted-foreground">Mutation inside notification</td>
+<td class="p-4 align-middle text-muted-foreground">Trampoline / queue</td>
+<td class="p-4 align-middle text-muted-foreground">N/A (no inline notification)</td>
+</tr>
+<tr class="border-b transition-colors hover:bg-muted/50">
+<td class="p-4 align-middle font-medium text-foreground">Stack overflow</td>
+<td class="p-4 align-middle text-muted-foreground">Deep synchronous chains</td>
+<td class="p-4 align-middle text-muted-foreground">Trampoline / async dispatch</td>
+<td class="p-4 align-middle text-muted-foreground">N/A (compute on access)</td>
+</tr>
+<tr class="transition-colors hover:bg-muted/50">
+<td class="p-4 align-middle font-medium text-foreground">Glitching</td>
+<td class="p-4 align-middle text-muted-foreground">Partial propagation of cascading updates</td>
+<td class="p-4 align-middle text-muted-foreground">Batch / transaction</td>
+<td class="p-4 align-middle text-muted-foreground">Consistent snapshot on read</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+These challenges are not fatal — mature push-based libraries have well-tested solutions. But they represent inherent complexity that the push model must manage, whereas pull-based systems avoid these categories of problems by design.

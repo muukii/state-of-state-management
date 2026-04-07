@@ -1,26 +1,60 @@
 ---
-title: "Three Styles of Dependency Tracking"
+title: "Graph-based Dependency Tracking"
 order: 3
 ---
 
-While "graph-based" is often used as a blanket term, the way dependencies are tracked differs significantly.
+**Every state management system needs derived state.** Whether push or pull, applications inevitably need to compute values from other values — filtered lists, aggregated counts, combined UI states.
 
-### 1. Automatic / Implicit Tracking
+The question is: **how are the dependencies between source and derived state managed?**
 
-The act of "reading" a state node automatically registers a dependency. Developers don't need to think about dependency relationships at all.
+### Manual Wiring
 
-- **Jotai**: `atom(get => get(otherAtom))` — dependency tracked at `get()` call time
-- **swift-state-graph**: Uses ThreadLocal to observe access and automatically discover dependencies
-- **Jetpack Compose**: The Snapshot system tracks State reads within `derivedStateOf {}` blocks
+The developer explicitly specifies which states to combine.
 
-### 2. Explicit Tracking
+```kotlin
+// Android StateFlow — manual wiring
+val uiState = combine(isLoading, user, posts) { loading, user, posts ->
+    UiState(loading, user, posts)
+}
+```
 
-The developer declares which nodes are depended upon via a `deps` array. This avoids the implicitness of automatic tracking and keeps dependencies visible.
+```typescript
+// Zustand — selector on the consumer side
+const doubled = useStore((state) => state.count * 2)
+```
+
+### Graph-based Tracking
+
+A dependency graph (DAG) is constructed — either automatically or declaratively — to manage which derived states depend on which source states. When a source changes, the graph determines the minimal set of derived states to recompute or invalidate.
+
+This technique appears in **both push and pull systems**:
+
+- **Push + Graph**: TanStack Store (`Derived` with explicit `deps`), Verge (`Derived` with pipeline)
+- **Pull + Graph**: Jotai (implicit tracking via `get()`), swift-state-graph (implicit tracking via ThreadLocal), Compose `derivedStateOf`
+
+The graph is not a paradigm — it is a **technique** for managing derived state efficiently.
+
+### Three Styles
+
+#### 1. Automatic / Implicit
+
+The act of "reading" a state node automatically registers a dependency. No explicit declaration needed.
+
+- **Jotai**: `atom(get => get(otherAtom))` — tracked at `get()` call time
+- **swift-state-graph**: ThreadLocal observes access and discovers dependencies
+- **Jetpack Compose**: Snapshot system tracks State reads within `derivedStateOf {}`
+
+#### 2. Explicit / Declarative
+
+The developer declares dependencies via a `deps` array or pipeline. The graph is still managed by the runtime, but the developer controls what goes in.
 
 - **TanStack Store**: `new Derived({ deps: [storeA, storeB], fn: ... })`
+- **Verge**: `store.derived(.select(\.count))` via pipeline
 
-### 3. No Tracking (Subscription-based)
+#### 3. No Graph (Manual)
 
-No dependency graph exists. The developer individually specifies "which changes to care about" using selectors.
+No dependency graph exists. The developer wires everything by hand.
 
-- **Zustand**: `useStore(state => state.count)` — compares the selector's return value with `Object.is`
+- **Zustand**: Selectors with `Object.is` equality
+- **TCA**: Computed properties on State struct or logic in reducers
+- **StateFlow**: `combine(a, b) { ... }` for every derived value
