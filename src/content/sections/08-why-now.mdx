@@ -23,7 +23,7 @@ Both push and pull architectures need derived state. The question is whether the
 
 1. **Manual** — the developer wires it (StateFlow `combine`, Zustand selectors)
 2. **Declarative** — the developer declares it (TanStack Store `deps`, Verge `Derived`)
-3. **Automatic** — the runtime discovers it (Jotai `get()`, swift-state-graph ThreadLocal, Compose Snapshot)
+3. **Automatic** — the runtime discovers it (Jotai `get()`, Atoms `watch()`, swift-state-graph ThreadLocal, Compose Snapshot)
 
 Graph-based tracking (options 2 and 3) reduces the manual wiring cost. It can be applied within a push architecture (Verge, TanStack Store) or as the foundation of a pull architecture (Jotai, swift-state-graph).
 
@@ -47,7 +47,7 @@ Graph-based tracking (options 2 and 3) reduces the manual wiring cost. It can be
 <tr class="border-b transition-colors hover:bg-muted/50">
 <td class="p-4 align-middle font-medium text-foreground">iOS</td>
 <td class="p-4 align-middle text-muted-foreground">Verge, TCA</td>
-<td class="p-4 align-middle text-muted-foreground">swift-state-graph</td>
+<td class="p-4 align-middle text-muted-foreground">Atoms (push+graph), swift-state-graph</td>
 </tr>
 <tr class="transition-colors hover:bg-muted/50">
 <td class="p-4 align-middle font-medium text-foreground">Android</td>

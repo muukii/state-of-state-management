@@ -29,7 +29,7 @@ A dependency graph (DAG) is constructed — either automatically or declarativel
 
 This technique appears in **both push and pull systems**:
 
-- **Push + Graph**: TanStack Store (`Derived` with explicit `deps`), Verge (`Derived` with pipeline)
+- **Push + Graph**: TanStack Store (`Derived` with explicit `deps`), Verge (`Derived` with pipeline), Atoms (implicit tracking via `watch()`)
 - **Pull + Graph**: Jotai (implicit tracking via `get()`), swift-state-graph (implicit tracking via ThreadLocal), Compose `derivedStateOf`
 
 The graph is not a paradigm — it is a **technique** for managing derived state efficiently.
@@ -41,6 +41,7 @@ The graph is not a paradigm — it is a **technique** for managing derived state
 The act of "reading" a state node automatically registers a dependency. No explicit declaration needed.
 
 - **Jotai**: `atom(get => get(otherAtom))` — tracked at `get()` call time
+- **Atoms**: `context.watch(OtherAtom())` — tracked at `watch()` call time (push propagation)
 - **swift-state-graph**: ThreadLocal observes access and discovers dependencies
 - **Jetpack Compose**: Snapshot system tracks State reads within `derivedStateOf {}`
 

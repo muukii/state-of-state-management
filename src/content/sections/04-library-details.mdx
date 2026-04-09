@@ -117,6 +117,70 @@ Reduce { state, action in ... }
 
 ---
 
+### Atoms (swiftui-atom-properties) — Push with Implicit Graph
+
+- **Repository**: [github.com/ra1028/swiftui-atom-properties](https://github.com/ra1028/swiftui-atom-properties)
+- **Language**: Swift
+- **Framework**: SwiftUI
+- **Paradigm**: Push-based with automatic dependency graph (Recoil/Jotai-inspired)
+
+#### Architecture
+
+Atoms is a Recoil/Jotai-inspired atomic state management library for SwiftUI. Like Jotai, the basic unit is an "atom" — a small, composable piece of state. However, unlike Jotai's pull/lazy model, Atoms uses **push-based propagation**: when a source atom changes, all dependent atoms are eagerly recomputed in topological order.
+
+The system provides `AtomRoot` for the global context, `AtomScope` for scoped overrides, and property wrappers (`@Watch`, `@WatchState`) for SwiftUI integration.
+
+#### Dependency Tracking
+
+**Automatic and implicit** — the same approach as Jotai. When an atom accesses another atom via `context.watch()` inside its `value` method, a dependency is automatically registered. The `AtomStore` maintains a bidirectional graph (`dependencies` and `children` maps).
+
+The key difference from Jotai/swift-state-graph: the `StoreContext` calculates a **topological sort** of affected nodes and **eagerly pushes** updates downstream, rather than lazily invalidating.
+
+#### Core Atom Types
+
+- **`StateAtom`**: Read-write mutable state
+- **`ValueAtom`**: Read-only derived value
+- **`TaskAtom`** / **`ThrowingTaskAtom`**: Async operations
+- **`PublisherAtom`**: Combine integration
+- **`ObservableObjectAtom`**: ObservableObject integration
+
+#### Code Example
+
+```swift
+struct CounterAtom: StateAtom, Hashable {
+    func defaultValue(context: Context) -> Int { 0 }
+}
+
+// Derived — context.watch() auto-registers dependency
+struct DoubledAtom: ValueAtom, Hashable {
+    func value(context: Context) -> Int {
+        context.watch(CounterAtom()) * 2
+    }
+}
+
+struct CounterView: View {
+    @WatchState(CounterAtom()) var count
+    @Watch(DoubledAtom()) var doubled
+
+    var body: some View {
+        Stepper("Count: \(count) (doubled: \(doubled))", value: $count)
+    }
+}
+```
+
+#### What Makes It Unique: Push + Implicit Graph
+
+Most libraries with implicit dependency tracking (Jotai, swift-state-graph) use pull/lazy evaluation. Atoms takes the opposite approach: **implicit tracking for graph construction, but push/eager propagation for updates**. The topological sort ensures correct ordering and avoids glitching.
+
+#### Strengths
+
+- Jotai-like API ergonomics in SwiftUI
+- No manual dependency wiring
+- Rich atom type system (async, Combine, ObservableObject)
+- Scoped contexts via `AtomScope`
+
+---
+
 ### Zustand — Push, Minimal
 
 - **Repository**: [github.com/pmndrs/zustand](https://github.com/pmndrs/zustand)

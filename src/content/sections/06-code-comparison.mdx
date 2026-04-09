@@ -42,6 +42,19 @@ struct Counter {
 }
 ```
 
+#### Atoms (swiftui-atom-properties)
+
+```swift
+struct CounterAtom: StateAtom, Hashable {
+    func defaultValue(context: Context) -> Int { 0 }
+}
+struct DoubledAtom: ValueAtom, Hashable {
+    func value(context: Context) -> Int {
+        context.watch(CounterAtom()) * 2  // watch() auto-registers dependency
+    }
+}
+```
+
 #### Zustand (Subscription / Selector)
 
 ```typescript

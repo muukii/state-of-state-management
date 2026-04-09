@@ -285,6 +285,83 @@ Scoped stores ensure child views only see their own domain, improving both modul
 
 ---
 
+### Atoms (swiftui-atom-properties) — Push-based with Implicit Graph
+
+- **Repository**: https://github.com/ra1028/swiftui-atom-properties
+- **Language**: Swift
+- **Framework**: SwiftUI
+- **Paradigm**: Push-based with automatic dependency graph (Recoil/Jotai-inspired)
+
+#### Architecture
+
+Atoms is a Recoil/Jotai-inspired atomic state management library for SwiftUI. Like Jotai, the basic unit is an "atom" — a small, composable piece of state. However, unlike Jotai's pull/lazy model, Atoms uses **push-based propagation**: when a source atom changes, all dependent atoms are eagerly recomputed in topological order.
+
+The system provides `AtomRoot` for the global context, `AtomScope` for scoped overrides, and property wrappers (`@Watch`, `@WatchState`) for SwiftUI integration.
+
+#### Dependency Tracking
+
+**Automatic and implicit** — the same approach as Jotai. When an atom accesses another atom via `context.watch()` inside its `value` method, a dependency is automatically registered. The `AtomStore` maintains a bidirectional graph:
+
+- `dependencies`: atom → set of atoms it depends on
+- `children`: atom → set of atoms that depend on it
+
+This is the same implicit tracking model as Jotai's `get()`, but the update propagation is push-based — the `StoreContext` calculates a topological sort of affected nodes and eagerly pushes updates downstream.
+
+#### Core Atom Types
+
+- **`StateAtom`**: Read-write mutable state (equivalent to Jotai's `atom(initialValue)`)
+- **`ValueAtom`**: Read-only derived value (equivalent to Jotai's `atom(get => ...)`)
+- **`TaskAtom`** / **`ThrowingTaskAtom`**: Async operations
+- **`PublisherAtom`**: Combine integration
+- **`ObservableObjectAtom`**: ObservableObject integration
+
+#### Code Example
+
+```swift
+// Source atom (mutable)
+struct CounterAtom: StateAtom, Hashable {
+    func defaultValue(context: Context) -> Int { 0 }
+}
+
+// Derived atom — context.watch() auto-registers dependency
+struct DoubledAtom: ValueAtom, Hashable {
+    func value(context: Context) -> Int {
+        context.watch(CounterAtom()) * 2
+    }
+}
+
+// SwiftUI view
+struct CounterView: View {
+    @WatchState(CounterAtom())
+    var count
+
+    @Watch(DoubledAtom())
+    var doubled
+
+    var body: some View {
+        Stepper("Count: \(count) (doubled: \(doubled))", value: $count)
+    }
+}
+```
+
+#### What Makes It Unique: Push + Implicit Graph
+
+Most libraries with implicit dependency tracking (Jotai, swift-state-graph) use pull/lazy evaluation. Atoms takes the opposite approach: **implicit tracking for graph construction, but push/eager propagation for updates**. When a `StateAtom` changes, the `StoreContext` topologically sorts all downstream atoms and eagerly recomputes them.
+
+This means:
+- Dependencies are discovered automatically (like Jotai)
+- But updates are pushed eagerly (like Verge/TCA)
+- The topological sort ensures correct ordering and avoids glitching
+
+#### Strengths
+
+- Jotai-like API ergonomics in SwiftUI
+- No manual dependency wiring
+- Rich atom type system (async, Combine, ObservableObject)
+- Scoped contexts via `AtomScope`
+
+---
+
 ### Zustand — Push-based, Minimal
 
 - **Repository**: https://github.com/pmndrs/zustand
@@ -536,18 +613,18 @@ Kotlin Multiplatform compatible, but not yet mainstream.
 
 ## Comparison Table
 
-| | **Verge** | **TCA** | **Zustand** | **TanStack Store** | **Jotai** | **swift-state-graph** | **Compose derivedStateOf** |
-|---|---|---|---|---|---|---|---|
-| Paradigm | Push | Push | Push | Push | Pull | Pull | Pull (UI layer) |
-| Graph | Derived pipeline | None | None | Explicit deps | Implicit auto | Implicit auto | Implicit auto |
-| Primitive | Store + Commit | Store + Reducer | Single Store | Store + Derived + Effect | Atom | Stored + Computed | State + derivedStateOf |
-| Derived State | `Derived<T>` pipeline | Computed in reducer / state | Selector | `Derived` class | `atom(get => ...)` | `@GraphComputed` | `derivedStateOf {}` |
-| Dep. Tracking | `@Tracking` + ifChanged | Manual | Selector equality | Explicit `deps` array | Auto (`get()`) | Auto (ThreadLocal) | Auto (Snapshot) |
-| Evaluation | Eager (push on change) | Eager (push on action) | Eager (notify all) | Lazy (on access) | On-demand | Lazy invalidation | Conditional invalidation |
-| Composition | Store scoping | Reducer composition | Middleware | Framework adapters | Atom composition | Node graph | Compose tree |
-| Thread Safety | swift-atomics | MainActor | — (JS) | — (JS) | — (JS) | Per-node lock | Snapshot system |
-| Language | Swift | Swift | TypeScript | TypeScript | TypeScript | Swift 6.0 | Kotlin |
-| Framework | SwiftUI/UIKit | SwiftUI | React | Multi-framework | React | SwiftUI/UIKit | Jetpack Compose |
+| | **Verge** | **TCA** | **Atoms** | **Zustand** | **TanStack Store** | **Jotai** | **swift-state-graph** | **Compose derivedStateOf** |
+|---|---|---|---|---|---|---|---|---|
+| Paradigm | Push | Push | Push | Push | Push | Pull | Pull | Pull (UI layer) |
+| Graph | Derived pipeline | None | Implicit auto | None | Explicit deps | Implicit auto | Implicit auto | Implicit auto |
+| Primitive | Store + Commit | Store + Reducer | Atom types | Single Store | Store + Derived + Effect | Atom | Stored + Computed | State + derivedStateOf |
+| Derived State | `Derived<T>` pipeline | Computed in reducer | `ValueAtom` (watch) | Selector | `Derived` class | `atom(get => ...)` | `@GraphComputed` | `derivedStateOf {}` |
+| Dep. Tracking | `@Tracking` + ifChanged | Manual | Auto (`watch()`) | Selector equality | Explicit `deps` array | Auto (`get()`) | Auto (ThreadLocal) | Auto (Snapshot) |
+| Evaluation | Eager (push) | Eager (push) | Eager (topological) | Eager (notify all) | Lazy (on access) | On-demand | Lazy invalidation | Conditional invalidation |
+| Composition | Store scoping | Reducer composition | AtomScope | Middleware | Framework adapters | Atom composition | Node graph | Compose tree |
+| Thread Safety | swift-atomics | MainActor | MainActor | — (JS) | — (JS) | — (JS) | Per-node lock | Snapshot system |
+| Language | Swift | Swift | Swift | TypeScript | TypeScript | TypeScript | Swift 6.0 | Kotlin |
+| Framework | SwiftUI/UIKit | SwiftUI | SwiftUI | React | Multi-framework | React | SwiftUI/UIKit | Jetpack Compose |
 
 ---
 
@@ -587,6 +664,18 @@ struct Counter {
       }
     }
   }
+}
+```
+
+**Atoms (swiftui-atom-properties)**
+```swift
+struct CounterAtom: StateAtom, Hashable {
+    func defaultValue(context: Context) -> Int { 0 }
+}
+struct DoubledAtom: ValueAtom, Hashable {
+    func value(context: Context) -> Int {
+        context.watch(CounterAtom()) * 2  // watch() auto-registers dependency
+    }
 }
 ```
 
@@ -676,7 +765,7 @@ Both push and pull architectures need derived state. The question is whether the
 
 1. **Manual** — the developer wires it (StateFlow `combine`, Zustand selectors)
 2. **Declarative** — the developer declares it (TanStack Store `deps`, Verge `Derived`)
-3. **Automatic** — the runtime discovers it (Jotai `get()`, swift-state-graph ThreadLocal, Compose Snapshot)
+3. **Automatic** — the runtime discovers it (Jotai `get()`, Atoms `watch()`, swift-state-graph ThreadLocal, Compose Snapshot)
 
 Graph-based tracking (options 2 and 3) reduces the manual wiring cost. It can be applied within a push architecture (Verge, TanStack Store) or as the foundation of a pull architecture (Jotai, swift-state-graph).
 
@@ -687,7 +776,7 @@ Graph-based tracking (options 2 and 3) reduces the manual wiring cost. It can be
 | Platform | Push-based (Mainstream) | Pull-based / Graph (Emerging) |
 |---|---|---|
 | **Web** | Redux, Zustand | Jotai, Signals (SolidJS, Angular, Vue), TanStack Store (push+graph) |
-| **iOS** | Verge, TCA | swift-state-graph |
+| **iOS** | Verge, TCA | Atoms (push+graph), swift-state-graph |
 | **Android** | ViewModel + StateFlow | Compose `derivedStateOf` (UI layer only) |
 
 The trend is not a wholesale shift from push to pull. Rather, **graph-based dependency tracking for derived state** is being adopted across paradigms — sometimes within push systems (Verge's `Derived`, TanStack Store), sometimes as the core of pull systems (Jotai, swift-state-graph), and sometimes within the UI framework itself (Compose, Signals).
@@ -710,6 +799,7 @@ The real evolution is not "push to pull" but rather: **derived state dependency 
 
 - [Verge](https://github.com/VergeGroup/swift-verge) — VergeGroup
 - [The Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture) — Point-Free
+- [Atoms (swiftui-atom-properties)](https://github.com/ra1028/swiftui-atom-properties) — ra1028
 - [Zustand](https://github.com/pmndrs/zustand) — pmndrs
 - [Jotai](https://github.com/pmndrs/jotai) — pmndrs
 - [TanStack Store](https://github.com/TanStack/store) — TanStack
