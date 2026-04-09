@@ -215,6 +215,29 @@ batch(() => {
   nameStore.setState(() => 'Bob');
 });
 // Listeners fire once after batch completes (__flush)`;
+
+const riverpodBasicCode = `final counterProvider = NotifierProvider<Counter, int>(() => Counter());
+
+class Counter extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void increment() => state++;
+}`;
+
+const riverpodDerivedCode = `final doubledProvider = Provider((ref) {
+  final count = ref.watch(counterProvider);
+  return count * 2;  // ref.watch() auto-registers dependency
+});`;
+
+const riverpodWidgetCode = `class CounterWidget extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = ref.watch(counterProvider);
+    final doubled = ref.watch(doubledProvider);
+    return Text('\$count (doubled: \$doubled)');
+  }
+}`;
 ---
 
 <DocsLayout title="Push-based Libraries" currentPath={`${base}/push/`}>
@@ -227,6 +250,7 @@ batch(() => {
 
   <!-- Verge -->
   <h2 id="verge">Verge</h2>
+  <p class="not-prose text-sm text-muted-foreground"><a href="https://github.com/VergeGroup/swift-verge" class="underline underline-offset-4 hover:text-foreground">github.com/VergeGroup/swift-verge</a></p>
 
   <p><strong>Platform:</strong> Swift (SwiftUI &amp; UIKit) &nbsp;|&nbsp; <strong>Paradigm:</strong> Push, Flux-inspired</p>
 
@@ -253,6 +277,7 @@ batch(() => {
 
   <!-- TCA -->
   <h2 id="tca">The Composable Architecture (TCA)</h2>
+  <p class="not-prose text-sm text-muted-foreground"><a href="https://github.com/pointfreeco/swift-composable-architecture" class="underline underline-offset-4 hover:text-foreground">github.com/pointfreeco/swift-composable-architecture</a></p>
 
   <p><strong>Platform:</strong> Swift (SwiftUI) &nbsp;|&nbsp; <strong>Paradigm:</strong> Push, Elm-inspired</p>
 
@@ -285,6 +310,7 @@ batch(() => {
 
   <!-- Atoms -->
   <h2 id="atoms">Atoms</h2>
+  <p class="not-prose text-sm text-muted-foreground"><a href="https://github.com/ra1028/swiftui-atom-properties" class="underline underline-offset-4 hover:text-foreground">github.com/ra1028/swiftui-atom-properties</a></p>
 
   <p><strong>Platform:</strong> Swift (SwiftUI) &nbsp;|&nbsp; <strong>Paradigm:</strong> Push + Implicit Graph (unique hybrid)</p>
 
@@ -313,8 +339,49 @@ batch(() => {
 
   <hr />
 
+  <!-- Riverpod -->
+  <h2 id="riverpod">Riverpod</h2>
+  <p class="not-prose text-sm text-muted-foreground"><a href="https://github.com/rrousselGit/riverpod" class="underline underline-offset-4 hover:text-foreground">github.com/rrousselGit/riverpod</a></p>
+
+  <p><strong>Platform:</strong> Dart (Flutter) &nbsp;|&nbsp; <strong>Paradigm:</strong> Push + Implicit Graph</p>
+
+  <p>Riverpod is a reactive state management library for Flutter. Like Jotai, it uses "providers" as atomic units of state. Dependencies are tracked automatically via <code>ref.watch()</code> &mdash; when Provider A calls <code>ref.watch(providerB)</code>, a dependency is registered. When providerB changes, providerA is automatically rebuilt.</p>
+
+  <p>Unlike Jotai (pull/lazy), Riverpod uses push-based propagation &mdash; changes are eagerly pushed to dependents. It uses lazy evaluation for initial computation but push for updates. This makes it architecturally very similar to Atoms (swiftui-atom-properties).</p>
+
+  <h3>Basic State (NotifierProvider)</h3>
+  <Code code={riverpodBasicCode} lang="dart" />
+
+  <h3>Derived State</h3>
+  <p>Derived providers use <code>ref.watch()</code> to automatically register dependencies. When the source provider changes, the derived provider is eagerly recomputed:</p>
+  <Code code={riverpodDerivedCode} lang="dart" />
+
+  <h3>Widget Integration</h3>
+  <Code code={riverpodWidgetCode} lang="dart" />
+
+  <h3>Core Provider Types</h3>
+  <ul>
+    <li><code>Provider&lt;T&gt;</code> &mdash; immutable computed/derived values</li>
+    <li><code>NotifierProvider&lt;T&gt;</code> &mdash; mutable state via Notifier class</li>
+    <li><code>FutureProvider&lt;T&gt;</code> &mdash; async operations</li>
+    <li><code>StreamProvider&lt;T&gt;</code> &mdash; stream-based values</li>
+    <li><code>AsyncNotifierProvider&lt;T&gt;</code> &mdash; async mutable state</li>
+  </ul>
+
+  <h3>What Makes It Similar to Atoms</h3>
+  <p>Both Riverpod and Atoms share the same architectural pattern: <strong>implicit dependency graph with push-based propagation</strong>. In Atoms, <code>context.watch()</code> builds the graph; in Riverpod, <code>ref.watch()</code> does the same. Both eagerly push updates through the graph when source state changes. The key difference is the platform: Atoms targets SwiftUI, while Riverpod targets Flutter.</p>
+
+  <h3>Trade-offs</h3>
+  <ul>
+    <li><strong>Strengths:</strong> Auto-tracking via ref.watch(), rich provider type system, code generation support, dominant Flutter solution</li>
+    <li><strong>Weaknesses:</strong> Flutter-only, push propagation means glitch concerns apply, ProviderScope boilerplate</li>
+  </ul>
+
+  <hr />
+
   <!-- Zustand -->
   <h2 id="zustand">Zustand</h2>
+  <p class="not-prose text-sm text-muted-foreground"><a href="https://github.com/pmndrs/zustand" class="underline underline-offset-4 hover:text-foreground">github.com/pmndrs/zustand</a></p>
 
   <p><strong>Platform:</strong> TypeScript (React) &nbsp;|&nbsp; <strong>Paradigm:</strong> Push, minimal</p>
 
@@ -339,6 +406,7 @@ batch(() => {
 
   <!-- TanStack Store -->
   <h2 id="tanstack-store">TanStack Store</h2>
+  <p class="not-prose text-sm text-muted-foreground"><a href="https://github.com/TanStack/store" class="underline underline-offset-4 hover:text-foreground">github.com/TanStack/store</a></p>
 
   <p><strong>Platform:</strong> TypeScript (React, Vue, Solid, Angular) &nbsp;|&nbsp; <strong>Paradigm:</strong> Push + Explicit Graph</p>
 

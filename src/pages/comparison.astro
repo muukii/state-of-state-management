@@ -91,6 +91,14 @@ fun DoubledDisplay(viewModel: MyViewModel) {
 
   Text("Doubled: $doubled")
 }`;
+
+const riverpodDoubledCode = `// Riverpod — Push + implicit graph
+final countProvider = StateProvider((ref) => 0);
+
+final doubledProvider = Provider((ref) {
+  final count = ref.watch(countProvider);
+  return count * 2;  // ref.watch() auto-registers dependency
+});`;
 ---
 
 <DocsLayout title="Comparison" currentPath={`${base}/comparison/`}>
@@ -111,6 +119,7 @@ fun DoubledDisplay(viewModel: MyViewModel) {
           <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Verge</th>
           <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">TCA</th>
           <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Atoms</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Riverpod</th>
           <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Zustand</th>
           <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">TanStack Store</th>
           <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Jotai</th>
@@ -126,6 +135,7 @@ fun DoubledDisplay(viewModel: MyViewModel) {
           <td class="p-4 align-middle text-muted-foreground">Push</td>
           <td class="p-4 align-middle text-muted-foreground">Push</td>
           <td class="p-4 align-middle text-muted-foreground">Push</td>
+          <td class="p-4 align-middle text-muted-foreground">Push</td>
           <td class="p-4 align-middle text-muted-foreground">Pull</td>
           <td class="p-4 align-middle text-muted-foreground">Pull</td>
           <td class="p-4 align-middle text-muted-foreground">Pull</td>
@@ -135,6 +145,7 @@ fun DoubledDisplay(viewModel: MyViewModel) {
           <td class="p-4 align-middle text-muted-foreground">Explicit</td>
           <td class="p-4 align-middle text-muted-foreground">None</td>
           <td class="p-4 align-middle text-muted-foreground">Implicit</td>
+          <td class="p-4 align-middle text-muted-foreground">Implicit auto</td>
           <td class="p-4 align-middle text-muted-foreground">None</td>
           <td class="p-4 align-middle text-muted-foreground">Explicit</td>
           <td class="p-4 align-middle text-muted-foreground">Implicit</td>
@@ -146,6 +157,7 @@ fun DoubledDisplay(viewModel: MyViewModel) {
           <td class="p-4 align-middle text-muted-foreground">Store</td>
           <td class="p-4 align-middle text-muted-foreground">Store + Reducer</td>
           <td class="p-4 align-middle text-muted-foreground">Atom</td>
+          <td class="p-4 align-middle text-muted-foreground">Provider types</td>
           <td class="p-4 align-middle text-muted-foreground">Store</td>
           <td class="p-4 align-middle text-muted-foreground">Store + Derived</td>
           <td class="p-4 align-middle text-muted-foreground">Atom</td>
@@ -157,6 +169,7 @@ fun DoubledDisplay(viewModel: MyViewModel) {
           <td class="p-4 align-middle text-muted-foreground">Derived pipeline</td>
           <td class="p-4 align-middle text-muted-foreground">Computed property</td>
           <td class="p-4 align-middle text-muted-foreground">ValueAtom</td>
+          <td class="p-4 align-middle text-muted-foreground">Provider (ref.watch)</td>
           <td class="p-4 align-middle text-muted-foreground">Selector function</td>
           <td class="p-4 align-middle text-muted-foreground">Derived class</td>
           <td class="p-4 align-middle text-muted-foreground">Derived atom</td>
@@ -168,6 +181,7 @@ fun DoubledDisplay(viewModel: MyViewModel) {
           <td class="p-4 align-middle text-muted-foreground">Manual (pipeline)</td>
           <td class="p-4 align-middle text-muted-foreground">Manual</td>
           <td class="p-4 align-middle text-muted-foreground">Auto (watch)</td>
+          <td class="p-4 align-middle text-muted-foreground">Auto (ref.watch())</td>
           <td class="p-4 align-middle text-muted-foreground">Manual (selector)</td>
           <td class="p-4 align-middle text-muted-foreground">Manual (deps array)</td>
           <td class="p-4 align-middle text-muted-foreground">Auto (get)</td>
@@ -179,6 +193,7 @@ fun DoubledDisplay(viewModel: MyViewModel) {
           <td class="p-4 align-middle text-muted-foreground">Eager</td>
           <td class="p-4 align-middle text-muted-foreground">Eager</td>
           <td class="p-4 align-middle text-muted-foreground">Eager (topo sort)</td>
+          <td class="p-4 align-middle text-muted-foreground">Eager (push)</td>
           <td class="p-4 align-middle text-muted-foreground">Eager</td>
           <td class="p-4 align-middle text-muted-foreground">Eager</td>
           <td class="p-4 align-middle text-muted-foreground">Lazy</td>
@@ -190,6 +205,7 @@ fun DoubledDisplay(viewModel: MyViewModel) {
           <td class="p-4 align-middle text-muted-foreground">Store nesting</td>
           <td class="p-4 align-middle text-muted-foreground">Scope / ifLet / forEach</td>
           <td class="p-4 align-middle text-muted-foreground">Atom composition</td>
+          <td class="p-4 align-middle text-muted-foreground">ProviderScope</td>
           <td class="p-4 align-middle text-muted-foreground">Slices</td>
           <td class="p-4 align-middle text-muted-foreground">Store + Derived graph</td>
           <td class="p-4 align-middle text-muted-foreground">Atom composition</td>
@@ -201,6 +217,7 @@ fun DoubledDisplay(viewModel: MyViewModel) {
           <td class="p-4 align-middle text-muted-foreground">Serialized commits</td>
           <td class="p-4 align-middle text-muted-foreground">MainActor</td>
           <td class="p-4 align-middle text-muted-foreground">Context isolation</td>
+          <td class="p-4 align-middle text-muted-foreground">Single-threaded (Dart)</td>
           <td class="p-4 align-middle text-muted-foreground">Sync (single-threaded)</td>
           <td class="p-4 align-middle text-muted-foreground">Sync</td>
           <td class="p-4 align-middle text-muted-foreground">React reconciler</td>
@@ -212,6 +229,7 @@ fun DoubledDisplay(viewModel: MyViewModel) {
           <td class="p-4 align-middle text-muted-foreground">Swift</td>
           <td class="p-4 align-middle text-muted-foreground">Swift</td>
           <td class="p-4 align-middle text-muted-foreground">Swift</td>
+          <td class="p-4 align-middle text-muted-foreground">Dart</td>
           <td class="p-4 align-middle text-muted-foreground">TypeScript</td>
           <td class="p-4 align-middle text-muted-foreground">TypeScript</td>
           <td class="p-4 align-middle text-muted-foreground">TypeScript</td>
@@ -223,6 +241,7 @@ fun DoubledDisplay(viewModel: MyViewModel) {
           <td class="p-4 align-middle text-muted-foreground">SwiftUI / UIKit</td>
           <td class="p-4 align-middle text-muted-foreground">SwiftUI</td>
           <td class="p-4 align-middle text-muted-foreground">SwiftUI</td>
+          <td class="p-4 align-middle text-muted-foreground">Flutter</td>
           <td class="p-4 align-middle text-muted-foreground">React</td>
           <td class="p-4 align-middle text-muted-foreground">React / Vue / Solid / Angular</td>
           <td class="p-4 align-middle text-muted-foreground">React</td>
@@ -250,6 +269,9 @@ fun DoubledDisplay(viewModel: MyViewModel) {
   <h4>Atoms</h4>
   <Code code={atomsDoubledCode} lang="swift" />
 
+  <h4>Riverpod</h4>
+  <Code code={riverpodDoubledCode} lang="dart" />
+
   <h4>Zustand</h4>
   <Code code={zustandDoubledCode} lang="tsx" />
 
@@ -272,15 +294,17 @@ fun DoubledDisplay(viewModel: MyViewModel) {
   <h2>References</h2>
 
   <ul>
-    <li><a href="https://github.com/nicklockwood/SwiftFormat">Verge</a> &mdash; <a href="https://github.com/VergeGroup/swift-Verge">github.com/VergeGroup/swift-Verge</a></li>
-    <li><a href="https://github.com/pointfreeco/swift-composable-architecture">TCA</a> &mdash; <a href="https://github.com/pointfreeco/swift-composable-architecture">github.com/pointfreeco/swift-composable-architecture</a></li>
-    <li><a href="https://github.com/ra1028/swiftui-atom-properties">Atoms</a> &mdash; <a href="https://github.com/ra1028/swiftui-atom-properties">github.com/ra1028/swiftui-atom-properties</a></li>
-    <li><a href="https://github.com/pmndrs/zustand">Zustand</a> &mdash; <a href="https://github.com/pmndrs/zustand">github.com/pmndrs/zustand</a></li>
-    <li><a href="https://github.com/TanStack/store">TanStack Store</a> &mdash; <a href="https://github.com/TanStack/store">github.com/TanStack/store</a></li>
-    <li><a href="https://github.com/pmndrs/jotai">Jotai</a> &mdash; <a href="https://github.com/pmndrs/jotai">github.com/pmndrs/jotai</a></li>
-    <li><a href="https://github.com/nicklockwood/SwiftFormat">swift-state-graph</a> &mdash; <a href="https://github.com/nicklockwood/SwiftFormat">github.com (see project repository)</a></li>
-    <li><a href="https://developer.android.com/jetpack/compose/side-effects#derivedstateof">Compose derivedStateOf</a> &mdash; <a href="https://developer.android.com/jetpack/compose/side-effects#derivedstateof">Android Developer Docs</a></li>
-    <li><a href="https://github.com/nicklockwood/SwiftFormat">ReactiveState-Kotlin</a> &mdash; <a href="https://github.com/nicklockwood/SwiftFormat">github.com (see project repository)</a></li>
-    <li><a href="https://github.com/tc39/proposal-signals">TC39 Signals Proposal</a> &mdash; <a href="https://github.com/tc39/proposal-signals">github.com/tc39/proposal-signals</a></li>
+    <li><a href="https://github.com/VergeGroup/swift-verge">Verge</a> &mdash; VergeGroup</li>
+    <li><a href="https://github.com/pointfreeco/swift-composable-architecture">TCA</a> &mdash; Point-Free</li>
+    <li><a href="https://github.com/ra1028/swiftui-atom-properties">Atoms</a> &mdash; ra1028</li>
+    <li><a href="https://github.com/pmndrs/zustand">Zustand</a> &mdash; pmndrs</li>
+    <li><a href="https://github.com/TanStack/store">TanStack Store</a> &mdash; TanStack</li>
+    <li><a href="https://github.com/pmndrs/jotai">Jotai</a> &mdash; pmndrs</li>
+    <li><a href="https://github.com/VergeGroup/swift-state-graph">swift-state-graph</a> &mdash; VergeGroup</li>
+    <li><a href="https://github.com/rrousselGit/riverpod">Riverpod</a> &mdash; rrousselGit</li>
+    <li><a href="https://developer.android.com/develop/ui/compose/state">Compose derivedStateOf</a> &mdash; Android Developers</li>
+    <li><a href="https://github.com/ensody/ReactiveState-Kotlin">ReactiveState-Kotlin</a> &mdash; ensody</li>
+    <li><a href="https://jotai.org/docs/guides/core-internals">Jotai Core Internals</a></li>
+    <li><a href="https://blog.zachklipp.com/how-derivedstateof-works-a-deep-d-er-ive/">How derivedStateOf works</a> &mdash; Zach Klipp</li>
   </ul>
 </DocsLayout>

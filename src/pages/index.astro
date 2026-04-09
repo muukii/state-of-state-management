@@ -86,6 +86,7 @@ graph TD
   <ul>
     <li><strong>Jotai</strong>: <code>atom(get =&gt; get(otherAtom))</code></li>
     <li><strong>Atoms</strong>: <code>context.watch(OtherAtom())</code> (push propagation)</li>
+    <li><strong>Riverpod</strong>: <code>ref.watch(provider)</code> (push propagation)</li>
     <li><strong>swift-state-graph</strong>: ThreadLocal access observation</li>
     <li><strong>Jetpack Compose</strong>: Snapshot system in <code>derivedStateOf {"{}"}</code></li>
   </ul>
@@ -129,10 +130,15 @@ graph TD
           <td class="p-4 align-middle text-muted-foreground">Verge, TCA</td>
           <td class="p-4 align-middle text-muted-foreground">Atoms (push+graph), swift-state-graph</td>
         </tr>
-        <tr class="transition-colors hover:bg-muted/50">
+        <tr class="border-b transition-colors hover:bg-muted/50">
           <td class="p-4 align-middle font-medium text-foreground"><a href={`${base}/android/`} class="underline underline-offset-4">Android</a></td>
           <td class="p-4 align-middle text-muted-foreground">ViewModel + StateFlow</td>
           <td class="p-4 align-middle text-muted-foreground">Compose derivedStateOf (UI layer only)</td>
+        </tr>
+        <tr class="transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground"><a href={`${base}/flutter/`} class="underline underline-offset-4">Flutter</a></td>
+          <td class="p-4 align-middle text-muted-foreground">Provider, Bloc</td>
+          <td class="p-4 align-middle text-muted-foreground">Riverpod (push+graph)</td>
         </tr>
       </tbody>
     </table>
