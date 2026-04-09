@@ -1,0 +1,366 @@
+---
+import DocsLayout from '../layouts/DocsLayout.astro';
+import { Code } from 'astro:components';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const vergeStoreCode = `import Verge
+
+struct MyState: Equatable {
+  var count: Int = 0
+  var name: String = ""
+}
+
+let store = Store<MyState, Never>(initialState: .init())
+
+// Commit-based mutation
+store.commit {
+  $0.count += 1
+}`;
+
+const vergeDerivedCode = `// Derived pipeline — push-based derived state
+let countDerived = store.derived(.map(\.count))
+
+// Observe with ifChanged for skip-redundant
+store.sinkState { state in
+  state.ifChanged(\.count) { count in
+    print("Count changed to \\(count)")
+  }
+}`;
+
+const vergeTrackingCode = `// @Tracking macro for SwiftUI
+@Tracking
+struct ContentView: View {
+  let store: Store<MyState, Never>
+
+  var body: some View {
+    // Only re-renders when accessed properties change
+    Text("Count: \\(store.state.count)")
+  }
+}`;
+
+const tcaFeatureCode = `import ComposableArchitecture
+
+@Reducer
+struct CounterFeature {
+  @ObservableState
+  struct State: Equatable {
+    var count = 0
+  }
+
+  enum Action {
+    case increment
+    case decrement
+    case reset
+  }
+
+  var body: some ReducerOf<Self> {
+    Reduce { state, action in
+      switch action {
+      case .increment:
+        state.count += 1
+        return .none
+      case .decrement:
+        state.count -= 1
+        return .none
+      case .reset:
+        state.count = 0
+        return .none
+      }
+    }
+  }
+}`;
+
+const tcaViewCode = `struct CounterView: View {
+  let store: StoreOf<CounterFeature>
+
+  var body: some View {
+    VStack {
+      Text("Count: \\(store.count)")
+      HStack {
+        Button("-") { store.send(.decrement) }
+        Button("+") { store.send(.increment) }
+      }
+    }
+  }
+}`;
+
+const tcaCompositionCode = `// Reducer composition with Scope
+@Reducer
+struct AppFeature {
+  struct State: Equatable {
+    var counter = CounterFeature.State()
+    var optionalChild: ChildFeature.State?
+    var rows: IdentifiedArrayOf<RowFeature.State> = []
+  }
+
+  enum Action {
+    case counter(CounterFeature.Action)
+    case optionalChild(ChildFeature.Action)
+    case rows(IdentifiedActionOf<RowFeature>)
+  }
+
+  var body: some ReducerOf<Self> {
+    Scope(state: \\.counter, action: \\.counter) {
+      CounterFeature()
+    }
+    .ifLet(\\.optionalChild, action: \\.optionalChild) {
+      ChildFeature()
+    }
+    .forEach(\\.rows, action: \\.rows) {
+      RowFeature()
+    }
+  }
+}`;
+
+const tcaTestCode = `// TestStore for exhaustive testing
+@Test func increment() async {
+  let store = TestStore(
+    initialState: CounterFeature.State()
+  ) {
+    CounterFeature()
+  }
+
+  await store.send(.increment) {
+    $0.count = 1
+  }
+}`;
+
+const atomsDefinitionCode = `import Atoms
+
+// StateAtom — writable source of truth
+struct CounterAtom: StateAtom, Hashable {
+  func defaultValue(context: Context) -> Int { 0 }
+}
+
+// ValueAtom — derived (read-only)
+struct DoubledAtom: ValueAtom, Hashable {
+  func value(context: Context) -> Int {
+    context.watch(CounterAtom()) * 2  // auto-tracking
+  }
+}
+
+// TaskAtom — async derived
+struct UserAtom: TaskAtom, Hashable {
+  func value(context: Context) async throws -> User {
+    try await api.fetchUser()
+  }
+}`;
+
+const atomsViewCode = `struct CounterView: View {
+  @Watch(CounterAtom()) var count
+  @Watch(DoubledAtom()) var doubled
+
+  var body: some View {
+    VStack {
+      Text("Count: \\(count)")
+      Text("Doubled: \\(doubled)")
+      Button("+") {
+        // StateAtom is writable
+        _count.wrappedValue += 1
+      }
+    }
+  }
+}`;
+
+const zustandCode = `import { create } from 'zustand';
+
+const useStore = create((set) => ({
+  count: 0,
+  increment: () => set((s) => ({ count: s.count + 1 })),
+  decrement: () => set((s) => ({ count: s.count - 1 })),
+}));
+
+// In a component — selector-based subscription
+function Counter() {
+  const count = useStore((s) => s.count);
+  const increment = useStore((s) => s.increment);
+  return <button onClick={increment}>{count}</button>;
+}`;
+
+const zustandDerivedCode = `// Derived state via selectors (no graph)
+function DoubledDisplay() {
+  const doubled = useStore((s) => s.count * 2);
+  return <span>{doubled}</span>;
+}
+
+// Zustand internals: Set<Listener>
+// Every set() call iterates all listeners
+// Each listener runs its selector + Object.is check`;
+
+const tanstackStoreCode = `import { Store, Derived, Effect } from '@tanstack/store';
+
+const countStore = new Store(0);
+const nameStore = new Store('Alice');
+
+// Derived with explicit deps + bidirectional dep map
+const doubled = new Derived({
+  deps: [countStore],
+  fn: ({ currDepVals: [count] }) => count * 2,
+});
+
+// Effect — side effects triggered by derived changes
+new Effect({
+  deps: [doubled],
+  fn: ({ currDepVals: [val] }) => {
+    console.log('Doubled changed to', val);
+  },
+});`;
+
+const tanstackBatchCode = `import { batch } from '@tanstack/store';
+
+// batch() defers listener notifications
+batch(() => {
+  countStore.setState(() => 5);
+  nameStore.setState(() => 'Bob');
+});
+// Listeners fire once after batch completes (__flush)`;
+---
+
+<DocsLayout title="Push-based Libraries" currentPath={`${base}/push/`}>
+  <h1>Push-based Libraries</h1>
+  <p class="text-lg text-muted-foreground !mt-2">
+    Deep dives into libraries where the store pushes state changes to subscribers.
+  </p>
+
+  <hr />
+
+  <!-- Verge -->
+  <h2 id="verge">Verge</h2>
+
+  <p><strong>Platform:</strong> Swift (SwiftUI &amp; UIKit) &nbsp;|&nbsp; <strong>Paradigm:</strong> Push, Flux-inspired</p>
+
+  <p>Verge provides a commit-based mutation model inspired by Flux/Vuex. State changes are explicit and serialized through <code>commit</code> closures, making every mutation traceable.</p>
+
+  <h3>Store &amp; Commit</h3>
+  <Code code={vergeStoreCode} lang="swift" />
+
+  <h3>Derived Pipeline</h3>
+  <p>Verge supports derived state through a push-based pipeline. The <code>Derived</code> type maps over store state and pushes updates downstream. The <code>ifChanged</code> pattern skips redundant notifications:</p>
+  <Code code={vergeDerivedCode} lang="swift" />
+
+  <h3>@Tracking for SwiftUI</h3>
+  <p>The <code>@Tracking</code> macro enables fine-grained observation in SwiftUI &mdash; only properties accessed during <code>body</code> evaluation trigger re-renders:</p>
+  <Code code={vergeTrackingCode} lang="swift" />
+
+  <h3>Trade-offs</h3>
+  <ul>
+    <li><strong>Strengths:</strong> Mature ecosystem, UIKit + SwiftUI support, explicit mutation tracking, Derived pipeline</li>
+    <li><strong>Weaknesses:</strong> Requires explicit commit discipline, Derived dependencies are declared (not auto-tracked)</li>
+  </ul>
+
+  <hr />
+
+  <!-- TCA -->
+  <h2 id="tca">The Composable Architecture (TCA)</h2>
+
+  <p><strong>Platform:</strong> Swift (SwiftUI) &nbsp;|&nbsp; <strong>Paradigm:</strong> Push, Elm-inspired</p>
+
+  <p>TCA follows the Elm architecture: <code>Store.send(action)</code> dispatches to a <code>Reducer</code> which produces new <code>State</code> + optional <code>Effect</code>s. The unidirectional data flow is strict and exhaustively testable.</p>
+
+  <h3>Feature Definition</h3>
+  <Code code={tcaFeatureCode} lang="swift" />
+
+  <h3>View Layer</h3>
+  <Code code={tcaViewCode} lang="swift" />
+
+  <h3>Reducer Composition</h3>
+  <p>TCA's most powerful feature is its composition operators. <code>Scope</code> focuses on child state, <code>ifLet</code> handles optional children, and <code>forEach</code> manages collections:</p>
+  <Code code={tcaCompositionCode} lang="swift" />
+
+  <h3>TestStore</h3>
+  <p>TCA provides exhaustive testing: every state change and effect must be explicitly asserted:</p>
+  <Code code={tcaTestCode} lang="swift" />
+
+  <h3>Action Buffering (Trampolining)</h3>
+  <p>When a reducer returns an effect that immediately sends another action, TCA buffers it rather than processing recursively. Actions are replayed sequentially after the current reducer completes.</p>
+
+  <h3>Trade-offs</h3>
+  <ul>
+    <li><strong>Strengths:</strong> Exhaustive testing, powerful composition, structured side effects, large community</li>
+    <li><strong>Weaknesses:</strong> Significant boilerplate, no automatic dependency tracking, steep learning curve, SwiftUI-focused</li>
+  </ul>
+
+  <hr />
+
+  <!-- Atoms -->
+  <h2 id="atoms">Atoms</h2>
+
+  <p><strong>Platform:</strong> Swift (SwiftUI) &nbsp;|&nbsp; <strong>Paradigm:</strong> Push + Implicit Graph (unique hybrid)</p>
+
+  <p>Atoms brings Recoil-style atomic state management to Swift. It uses <code>context.watch()</code> for automatic dependency tracking, but propagates changes via <strong>push</strong> through a topologically-sorted graph. This makes it a unique hybrid: auto-tracked graph with push propagation.</p>
+
+  <h3>Atom Definitions</h3>
+  <Code code={atomsDefinitionCode} lang="swift" />
+
+  <h3>SwiftUI Integration</h3>
+  <Code code={atomsViewCode} lang="swift" />
+
+  <h3>What Makes Atoms Unique</h3>
+  <p>Most graph-based libraries are pull-based (Jotai, swift-state-graph). Atoms inverts this: the dependency graph is <strong>built via implicit tracking</strong> (<code>context.watch()</code>), but updates <strong>propagate via push</strong> using topological sort. This gives it automatic dependency management without lazy evaluation.</p>
+
+  <ul>
+    <li><strong>StateAtom:</strong> Writable source of truth</li>
+    <li><strong>ValueAtom:</strong> Synchronous derived value</li>
+    <li><strong>TaskAtom:</strong> Asynchronous derived value</li>
+  </ul>
+
+  <h3>Trade-offs</h3>
+  <ul>
+    <li><strong>Strengths:</strong> Auto-tracking, familiar atom model, async support, fine-grained reactivity</li>
+    <li><strong>Weaknesses:</strong> SwiftUI-only, push propagation means glitch concerns still apply</li>
+  </ul>
+
+  <hr />
+
+  <!-- Zustand -->
+  <h2 id="zustand">Zustand</h2>
+
+  <p><strong>Platform:</strong> TypeScript (React) &nbsp;|&nbsp; <strong>Paradigm:</strong> Push, minimal</p>
+
+  <p>Zustand is the most popular React state manager outside of React's built-in hooks. At approximately <strong>2 KB</strong>, it provides a <code>Set&lt;Listener&gt;</code> subscription model with selector-based derived state. No dependency graph, no middleware by default &mdash; just a store and listeners.</p>
+
+  <h3>Store &amp; Component</h3>
+  <Code code={zustandCode} lang="typescript" />
+
+  <h3>Derived State</h3>
+  <Code code={zustandDerivedCode} lang="typescript" />
+
+  <h3>How It Works</h3>
+  <p>Internally, Zustand maintains a <code>Set&lt;Listener&gt;</code>. Every <code>set()</code> call iterates all registered listeners. Each listener runs its selector function and compares the result with <code>Object.is</code> &mdash; if different, the component re-renders.</p>
+
+  <h3>Trade-offs</h3>
+  <ul>
+    <li><strong>Strengths:</strong> Extremely small, simple mental model, no boilerplate, excellent TypeScript support</li>
+    <li><strong>Limitations:</strong> No dependency tracking, no automatic graph, selectors are manual, all listeners notified on every change</li>
+  </ul>
+
+  <hr />
+
+  <!-- TanStack Store -->
+  <h2 id="tanstack-store">TanStack Store</h2>
+
+  <p><strong>Platform:</strong> TypeScript (React, Vue, Solid, Angular) &nbsp;|&nbsp; <strong>Paradigm:</strong> Push + Explicit Graph</p>
+
+  <p>TanStack Store provides <code>Store</code>, <code>Derived</code>, and <code>Effect</code> primitives with a <strong>bidirectional dependency map</strong>. Unlike Zustand's flat listener model, TanStack Store builds an explicit graph where each <code>Derived</code> declares its <code>deps</code> array.</p>
+
+  <h3>Store, Derived &amp; Effect</h3>
+  <Code code={tanstackStoreCode} lang="typescript" />
+
+  <h3>Batching</h3>
+  <p>The <code>batch()</code> function defers listener notifications until all mutations complete, then calls <code>__flush()</code> to propagate changes through the graph:</p>
+  <Code code={tanstackBatchCode} lang="typescript" />
+
+  <h3>Key Design Choices</h3>
+  <ul>
+    <li><strong>Explicit deps:</strong> Dependencies are declared, not auto-tracked. This makes the graph inspectable but requires manual maintenance.</li>
+    <li><strong>Bidirectional dep map:</strong> Each node knows both its dependencies and its dependents, enabling efficient targeted propagation.</li>
+    <li><strong>Multi-framework:</strong> Works with React, Vue, Solid, and Angular through framework-specific adapters.</li>
+  </ul>
+
+  <h3>Trade-offs</h3>
+  <ul>
+    <li><strong>Strengths:</strong> Explicit graph, batch support, framework-agnostic, Effect primitive for side effects</li>
+    <li><strong>Weaknesses:</strong> Manual dependency declaration, newer ecosystem, more API surface than Zustand</li>
+  </ul>
+</DocsLayout>

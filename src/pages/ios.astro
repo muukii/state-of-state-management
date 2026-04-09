@@ -1,0 +1,277 @@
+---
+import DocsLayout from '../layouts/DocsLayout.astro';
+import { Code } from 'astro:components';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const vergeExample = `import Verge
+
+struct AppState: Equatable {
+  var count: Int = 0
+  var items: [Item] = []
+}
+
+let store = Store<AppState, Never>(initialState: .init())
+
+// Commit-based mutation
+store.commit { $0.count += 1 }
+
+// Derived with ifChanged
+store.sinkState { state in
+  state.ifChanged(\.count) { count in
+    print("Count: \(count)")
+  }
+}`;
+
+const tcaExample = `import ComposableArchitecture
+
+@Reducer
+struct Feature {
+  @ObservableState
+  struct State: Equatable {
+    var count = 0
+    var child: ChildFeature.State?
+  }
+
+  enum Action {
+    case increment
+    case child(ChildFeature.Action)
+  }
+
+  var body: some ReducerOf<Self> {
+    Reduce { state, action in
+      switch action {
+      case .increment:
+        state.count += 1
+        return .none
+      case .child:
+        return .none
+      }
+    }
+    .ifLet(\\.child, action: \\.child) {
+      ChildFeature()
+    }
+  }
+}`;
+
+const atomsExample = `import Atoms
+
+struct CounterAtom: StateAtom, Hashable {
+  func defaultValue(context: Context) -> Int { 0 }
+}
+
+struct DoubledAtom: ValueAtom, Hashable {
+  func value(context: Context) -> Int {
+    context.watch(CounterAtom()) * 2
+  }
+}
+
+struct CounterView: View {
+  @Watch(CounterAtom()) var count
+  @Watch(DoubledAtom()) var doubled
+
+  var body: some View {
+    Text("\\(count) x 2 = \\(doubled)")
+  }
+}`;
+
+const ssgExample = `import StateGraph
+
+struct AppGraph {
+  @Stored var count: Int = 0
+
+  @Computed var doubled: Int {
+    count * 2  // auto-tracked
+  }
+
+  @Computed var label: String {
+    "Value: \\(doubled)"  // transitive dependency
+  }
+}
+
+struct ContentView: View {
+  @GraphState var graph = AppGraph()
+
+  var body: some View {
+    VStack {
+      Text(graph.label)
+      Button("+") { graph.count += 1 }
+    }
+  }
+}`;
+
+const combineExample = `// Combine: Apple's reactive framework
+// Often used pre-SwiftUI, declining for state management
+class ViewModel: ObservableObject {
+  @Published var count = 0
+
+  var doubled: AnyPublisher<Int, Never> {
+    $count.map { $0 * 2 }.eraseToAnyPublisher()
+  }
+}
+// Issues: subscription management, memory leaks, verbose`;
+---
+
+<DocsLayout title="iOS Platform" currentPath={`${base}/ios/`}>
+  <h1>iOS Platform</h1>
+  <p class="text-lg text-muted-foreground !mt-2">
+    State management approaches in the Apple ecosystem, from SwiftUI to UIKit.
+  </p>
+
+  <hr />
+
+  <h2>Context</h2>
+
+  <p>iOS state management has evolved through several phases:</p>
+
+  <ol>
+    <li><strong>MVC / KVO era:</strong> Manual observation, delegate patterns, NotificationCenter</li>
+    <li><strong>Combine / ObservableObject:</strong> Apple's reactive framework (2019), adopted with SwiftUI. <code>@Published</code> properties and Combine pipelines.</li>
+    <li><strong>Observation framework:</strong> Swift 5.9 (2023) introduced <code>@Observable</code>, a macro-based approach that replaced Combine for many use cases in SwiftUI.</li>
+    <li><strong>Third-party libraries:</strong> Verge, TCA, Atoms, swift-state-graph &mdash; each bringing distinct architectural philosophies.</li>
+  </ol>
+
+  <h3>Combine Limitations</h3>
+  <p>While Combine remains available, it has limitations for state management:</p>
+  <Code code={combineExample} lang="swift" />
+  <ul>
+    <li>Subscription lifecycle management (cancellables)</li>
+    <li>Memory leak potential with retain cycles</li>
+    <li>Verbose operator chains for derived state</li>
+    <li>No built-in dependency graph</li>
+    <li>Apple has shifted focus to <code>@Observable</code> and AsyncSequence</li>
+  </ul>
+
+  <hr />
+
+  <h2 id="verge">Verge</h2>
+
+  <p><strong>Paradigm:</strong> Push, Flux-inspired &nbsp;|&nbsp; <strong>Maturity:</strong> Production-proven</p>
+
+  <p>Verge is a mature state management library that supports both SwiftUI and UIKit. Its commit-based mutation model provides explicit state change tracking, and the <code>@Tracking</code> macro enables fine-grained SwiftUI observation.</p>
+
+  <Code code={vergeExample} lang="swift" />
+
+  <p><strong>Key features:</strong></p>
+  <ul>
+    <li>Commit-based mutations with full traceability</li>
+    <li><code>Derived</code> pipeline for push-based derived state</li>
+    <li><code>@Tracking</code> macro for property-level SwiftUI observation</li>
+    <li><code>ifChanged</code> for skip-redundant notifications</li>
+    <li>UIKit and SwiftUI support</li>
+  </ul>
+
+  <p><a href={`${base}/push/#verge`}>See detailed analysis &rarr;</a></p>
+
+  <hr />
+
+  <h2 id="tca">The Composable Architecture (TCA)</h2>
+
+  <p><strong>Paradigm:</strong> Push, Elm-inspired &nbsp;|&nbsp; <strong>Maintainer:</strong> <a href="https://www.pointfree.co/">Point-Free</a></p>
+
+  <p>TCA is the most structured approach to iOS state management. Created by Brandon Williams and Stephen Celis at Point-Free, it enforces unidirectional data flow with exhaustive testability. Its composition operators (<code>Scope</code>, <code>ifLet</code>, <code>forEach</code>) enable building complex features from small, testable reducers.</p>
+
+  <Code code={tcaExample} lang="swift" />
+
+  <p><strong>Key features:</strong></p>
+  <ul>
+    <li>Elm-inspired: Action &rarr; Reducer &rarr; State + Effects</li>
+    <li>Powerful composition: <code>Scope</code>, <code>ifLet</code>, <code>forEach</code></li>
+    <li><code>TestStore</code> for exhaustive assertion of state changes and effects</li>
+    <li>Action buffering for safe reentrant updates</li>
+    <li>Large, active community and extensive documentation</li>
+  </ul>
+
+  <p><strong>Trade-offs:</strong> Significant boilerplate for simple features, steep learning curve, no automatic dependency tracking, primarily SwiftUI-focused.</p>
+
+  <p><a href={`${base}/push/#tca`}>See detailed analysis &rarr;</a></p>
+
+  <hr />
+
+  <h2 id="atoms">Atoms</h2>
+
+  <p><strong>Paradigm:</strong> Push + Implicit Graph (hybrid) &nbsp;|&nbsp; <strong>Inspired by:</strong> Recoil</p>
+
+  <p>Atoms brings the Recoil model to Swift: atomic state units with <code>context.watch()</code> for automatic dependency tracking. Uniquely, it combines implicit graph construction with push-based propagation via topological sort.</p>
+
+  <Code code={atomsExample} lang="swift" />
+
+  <p><strong>Key features:</strong></p>
+  <ul>
+    <li>Auto-tracking via <code>context.watch()</code></li>
+    <li>Push propagation through topologically-sorted graph</li>
+    <li><code>StateAtom</code> / <code>ValueAtom</code> / <code>TaskAtom</code> primitives</li>
+    <li>SwiftUI-native with <code>@Watch</code> property wrapper</li>
+  </ul>
+
+  <p><a href={`${base}/push/#atoms`}>See detailed analysis &rarr;</a></p>
+
+  <hr />
+
+  <h2 id="swift-state-graph">swift-state-graph</h2>
+
+  <p><strong>Paradigm:</strong> Pull, DAG-based &nbsp;|&nbsp; <strong>Status:</strong> Newest entrant</p>
+
+  <p>swift-state-graph is the newest iOS state management library, bringing a Jotai-like pull-based approach to Swift. It models state as a directed acyclic graph with <code>Stored</code> and <code>Computed</code> nodes, using ThreadLocal-based auto-tracking and lazy invalidation.</p>
+
+  <Code code={ssgExample} lang="swift" />
+
+  <p><strong>Key features:</strong></p>
+  <ul>
+    <li>Pull-based with lazy invalidation (glitch-free)</li>
+    <li>ThreadLocal auto-tracking for dependency discovery</li>
+    <li>Swift macros (<code>@Stored</code>, <code>@Computed</code>)</li>
+    <li>Per-node locking for thread safety</li>
+    <li>Extensible <code>Storage</code> protocol</li>
+    <li>Both SwiftUI and UIKit support</li>
+  </ul>
+
+  <p><a href={`${base}/pull/#swift-state-graph`}>See detailed analysis &rarr;</a></p>
+
+  <hr />
+
+  <h2>iOS Has the Richest Diversity</h2>
+
+  <p>Among the three platforms surveyed (Web, iOS, Android), <strong>iOS has the richest diversity of state management approaches</strong>:</p>
+
+  <div class="not-prose my-6 w-full overflow-auto rounded-lg border border-border bg-card">
+    <table class="w-full min-w-[600px] caption-bottom text-sm">
+      <thead class="[&_tr]:border-b">
+        <tr class="border-b transition-colors">
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Library</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Paradigm</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Graph</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Inspiration</th>
+        </tr>
+      </thead>
+      <tbody class="[&_tr:last-child]:border-0">
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Verge</td>
+          <td class="p-4 align-middle text-muted-foreground">Push</td>
+          <td class="p-4 align-middle text-muted-foreground">Explicit (Derived)</td>
+          <td class="p-4 align-middle text-muted-foreground">Flux / Vuex</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">TCA</td>
+          <td class="p-4 align-middle text-muted-foreground">Push</td>
+          <td class="p-4 align-middle text-muted-foreground">None</td>
+          <td class="p-4 align-middle text-muted-foreground">Elm</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Atoms</td>
+          <td class="p-4 align-middle text-muted-foreground">Push + Graph</td>
+          <td class="p-4 align-middle text-muted-foreground">Implicit (auto)</td>
+          <td class="p-4 align-middle text-muted-foreground">Recoil</td>
+        </tr>
+        <tr class="transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">swift-state-graph</td>
+          <td class="p-4 align-middle text-muted-foreground">Pull</td>
+          <td class="p-4 align-middle text-muted-foreground">Implicit (auto)</td>
+          <td class="p-4 align-middle text-muted-foreground">Jotai / Signals</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>This diversity reflects the iOS community's willingness to explore different architectural paradigms. While the web converges toward Signals and Android relies on Google's standard stack, iOS developers have multiple mature options spanning push, pull, graph-based, and hybrid approaches.</p>
+</DocsLayout>

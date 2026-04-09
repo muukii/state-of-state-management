@@ -1,0 +1,134 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+  currentPath: string;
+}
+
+import BaseLayout from './BaseLayout.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import Footer from '../components/Footer.astro';
+
+const { title, description = 'State management architectures across Web, iOS, and Android.', currentPath } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const navGroups = [
+  {
+    label: 'Overview',
+    items: [
+      { href: `${base}/`, label: 'Introduction' },
+      { href: `${base}/push-vs-pull/`, label: 'Push vs Pull' },
+    ],
+  },
+  {
+    label: 'By Paradigm',
+    items: [
+      { href: `${base}/push/`, label: 'Push-based Libraries' },
+      { href: `${base}/pull/`, label: 'Pull-based Libraries' },
+    ],
+  },
+  {
+    label: 'By Platform',
+    items: [
+      { href: `${base}/web/`, label: 'Web' },
+      { href: `${base}/ios/`, label: 'iOS' },
+      { href: `${base}/android/`, label: 'Android' },
+    ],
+  },
+  {
+    label: 'Reference',
+    items: [
+      { href: `${base}/comparison/`, label: 'Comparison' },
+    ],
+  },
+];
+
+function isActive(href: string, current: string) {
+  const normHref = href.replace(/\/$/, '') || '/';
+  const normCurrent = current.replace(/\/$/, '') || '/';
+  return normHref === normCurrent;
+}
+---
+
+<BaseLayout title={`${title} — State of State Management`} description={description}>
+  <SiteHeader />
+
+  <div class="mx-auto flex max-w-screen-2xl gap-8 px-4 sm:px-6 lg:px-8">
+    <!-- Sidebar -->
+    <aside class="hidden lg:block sticky top-14 h-[calc(100vh-3.5rem)] w-56 shrink-0 overflow-y-auto border-r border-border/40 py-6 pr-4">
+      {navGroups.map((group) => (
+        <div class="mb-6">
+          <div class="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {group.label}
+          </div>
+          <ul class="flex flex-col gap-0.5">
+            {group.items.map((item) => (
+              <li>
+                <a
+                  href={item.href}
+                  class:list={[
+                    'flex w-full items-center rounded-md px-2 py-1.5 text-sm transition-colors',
+                    isActive(item.href, currentPath)
+                      ? 'bg-accent text-foreground font-medium'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent',
+                  ]}
+                >
+                  {item.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </aside>
+
+    <!-- Main content -->
+    <main class="min-w-0 flex-1 py-10 lg:py-14">
+      <div class="mx-auto max-w-3xl">
+        <!-- Mobile nav -->
+        <details class="lg:hidden mb-10 rounded-lg border border-border p-4">
+          <summary class="cursor-pointer text-sm font-medium text-foreground">
+            Navigation
+          </summary>
+          <ul class="mt-3 flex flex-col gap-1">
+            {navGroups.flatMap((g) => g.items).map((item) => (
+              <li>
+                <a
+                  href={item.href}
+                  class:list={[
+                    'block rounded-md px-2 py-1.5 text-sm transition-colors',
+                    isActive(item.href, currentPath)
+                      ? 'bg-accent text-foreground font-medium'
+                      : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                  ]}
+                >
+                  {item.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </details>
+
+        <article class="prose dark:prose-invert max-w-none
+          prose-headings:scroll-mt-20 prose-headings:tracking-tight
+          prose-h1:text-3xl prose-h1:font-bold prose-h1:mb-4
+          prose-h2:text-2xl prose-h2:font-semibold prose-h2:mt-12 prose-h2:mb-6
+          prose-h3:text-lg prose-h3:font-semibold prose-h3:mt-10 prose-h3:mb-4
+          prose-h4:text-base prose-h4:font-semibold prose-h4:mt-8 prose-h4:mb-3
+          prose-p:leading-7
+          prose-li:leading-7
+          prose-a:underline prose-a:underline-offset-4 prose-a:decoration-border hover:prose-a:decoration-foreground
+          prose-code:rounded prose-code:border prose-code:border-border prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:text-[0.85em] prose-code:font-normal prose-code:before:content-none prose-code:after:content-none
+          prose-pre:rounded-lg prose-pre:border prose-pre:border-border
+          [&_pre_code]:border-0 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:rounded-none [&_pre_code]:text-[inherit]
+          prose-hr:border-border prose-hr:my-12
+          prose-ul:my-4 prose-ol:my-4
+          prose-strong:font-semibold">
+          <slot />
+        </article>
+      </div>
+    </main>
+  </div>
+
+  <Footer />
+</BaseLayout>

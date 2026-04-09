@@ -1,0 +1,222 @@
+---
+import DocsLayout from '../layouts/DocsLayout.astro';
+import { Code } from 'astro:components';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const zustandExample = `import { create } from 'zustand';
+
+// ~2KB — the entire library
+const useStore = create((set) => ({
+  count: 0,
+  increment: () => set((s) => ({ count: s.count + 1 })),
+}));
+
+// Component subscribes via selector
+function Counter() {
+  const count = useStore((s) => s.count);
+  return <span>{count}</span>;
+}`;
+
+const jotaiExample = `import { atom, useAtom } from 'jotai';
+
+const countAtom = atom(0);
+const doubledAtom = atom((get) => get(countAtom) * 2);
+
+function Display() {
+  const [doubled] = useAtom(doubledAtom);
+  return <span>{doubled}</span>;
+  // Only re-renders when countAtom changes
+  // Dependency tracked automatically via get()
+}`;
+
+const tanstackExample = `import { Store, Derived } from '@tanstack/store';
+
+const count = new Store(0);
+const doubled = new Derived({
+  deps: [count],
+  fn: ({ currDepVals: [c] }) => c * 2,
+});
+
+// Works with React, Vue, Solid, Angular
+// Framework adapters: useStore(count)`;
+
+const signalsAngularCode = `// Angular v16+ Signals
+import { signal, computed, effect } from '@angular/core';
+
+const count = signal(0);
+const doubled = computed(() => count() * 2);
+
+effect(() => {
+  console.log('Doubled:', doubled());
+});
+
+count.set(5); // effect logs "Doubled: 10"`;
+
+const signalsSolidCode = `// SolidJS — Signals from the start
+import { createSignal, createMemo, createEffect } from 'solid-js';
+
+const [count, setCount] = createSignal(0);
+const doubled = createMemo(() => count() * 2);
+
+createEffect(() => {
+  console.log('Doubled:', doubled());
+});`;
+
+const signalsVueCode = `// Vue 3 Composition API (ref/computed are Signals)
+import { ref, computed, watchEffect } from 'vue';
+
+const count = ref(0);
+const doubled = computed(() => count.value * 2);
+
+watchEffect(() => {
+  console.log('Doubled:', doubled.value);
+});`;
+
+const tc39ProposalCode = `// TC39 Signals Proposal (Stage 1)
+// Standardizing the primitive across frameworks
+const counter = new Signal.State(0);
+const doubled = new Signal.Computed(() => counter.get() * 2);
+
+// Framework-agnostic, browser-native reactivity`;
+---
+
+<DocsLayout title="Web Platform" currentPath={`${base}/web/`}>
+  <h1>Web Platform</h1>
+  <p class="text-lg text-muted-foreground !mt-2">
+    State management in the React ecosystem and the emerging Signals standard.
+  </p>
+
+  <hr />
+
+  <h2>React Ecosystem Context</h2>
+
+  <p>React's built-in state primitives (<code>useState</code>, <code>useReducer</code>, <code>useContext</code>) handle local and shared state but lack support for derived state graphs, cross-component subscriptions, and fine-grained reactivity. This gap has driven the creation of external state management libraries.</p>
+
+  <p>The evolution on the web followed a clear trajectory:</p>
+
+  <ol>
+    <li><strong>Redux (2015):</strong> Single store, actions, reducers &mdash; the Elm architecture for React. Dominant for years, now declining in new projects.</li>
+    <li><strong>Zustand (2019):</strong> Minimal push-based store. Now the most popular alternative.</li>
+    <li><strong>Jotai (2020):</strong> Atomic, pull-based. Growing rapidly as developers seek finer granularity.</li>
+    <li><strong>TanStack Store (2023):</strong> Multi-framework, explicit graph. Newest entrant with a structured approach.</li>
+    <li><strong>Signals (ongoing):</strong> Framework-native reactive primitives. Angular, SolidJS, Vue 3, and a TC39 proposal aim to standardize the pattern.</li>
+  </ol>
+
+  <hr />
+
+  <h2 id="zustand">Zustand</h2>
+
+  <p><strong>Status:</strong> Dominant &nbsp;|&nbsp; <strong>Size:</strong> ~2 KB &nbsp;|&nbsp; <strong>Paradigm:</strong> Push, simple subscription</p>
+
+  <p>Zustand's appeal is simplicity. A store is a function, subscription is a selector, and the entire library fits in ~2 KB. It has become the default choice for React state management when React's built-in hooks are insufficient.</p>
+
+  <Code code={zustandExample} lang="tsx" />
+
+  <p>Zustand uses a <code>Set&lt;Listener&gt;</code> model: every <code>set()</code> call notifies all listeners, each running its selector and comparing with <code>Object.is</code>. This is simple but means <strong>every listener is invoked on every change</strong> &mdash; the selector just decides whether to re-render.</p>
+
+  <p><strong>Key insight:</strong> Zustand proves that push-based + no graph can work extremely well when applications are small-to-medium. The complexity of graph-based solutions only becomes justified at scale.</p>
+
+  <hr />
+
+  <h2 id="jotai">Jotai</h2>
+
+  <p><strong>Status:</strong> Growing rapidly &nbsp;|&nbsp; <strong>Paradigm:</strong> Pull, atom graph, auto-tracking</p>
+
+  <p>Jotai represents the pull-based, graph-aware approach on the web. Atoms are independent state units that compose via <code>get()</code> &mdash; the act of reading creates a dependency edge in the graph.</p>
+
+  <Code code={jotaiExample} lang="tsx" />
+
+  <p>Unlike Zustand where the store is a single object, Jotai's state is <strong>distributed across atoms</strong>. Each component subscribes only to the atoms it uses, achieving fine-grained reactivity without manual selectors.</p>
+
+  <p>Jotai descends from Facebook's <a href="https://recoiljs.org/">Recoil</a> but simplifies the model: no string keys, no explicit <code>RecoilRoot</code>, and a smaller API. As Recoil's maintenance has slowed, Jotai has become the standard for atomic state in React.</p>
+
+  <hr />
+
+  <h2 id="tanstack-store">TanStack Store</h2>
+
+  <p><strong>Status:</strong> Newest entrant &nbsp;|&nbsp; <strong>Paradigm:</strong> Push + explicit graph, multi-framework</p>
+
+  <p>TanStack Store takes a different approach: explicit dependency declaration with <code>Store</code>, <code>Derived</code>, and <code>Effect</code> primitives. Dependencies are listed in a <code>deps</code> array rather than auto-tracked.</p>
+
+  <Code code={tanstackExample} lang="typescript" />
+
+  <p>Its distinguishing feature is <strong>framework-agnostic design</strong>. The core store logic is pure TypeScript; framework-specific adapters (<code>@tanstack/react-store</code>, <code>@tanstack/vue-store</code>, etc.) handle the integration. This makes it the only major state library usable across React, Vue, Solid, and Angular.</p>
+
+  <hr />
+
+  <h2 id="signals">The Signals Trend</h2>
+
+  <p>Signals are pull-based reactive primitives: a <strong>value that notifies dependents when it changes</strong>. Unlike push-based subscription, Signals build a dependency graph automatically and propagate changes efficiently through it.</p>
+
+  <p>Multiple frameworks have adopted Signals independently, converging on nearly identical APIs:</p>
+
+  <h3>Angular v16+</h3>
+  <Code code={signalsAngularCode} lang="typescript" />
+
+  <h3>SolidJS</h3>
+  <Code code={signalsSolidCode} lang="typescript" />
+
+  <h3>Vue 3</h3>
+  <p>Vue 3's <code>ref()</code> and <code>computed()</code> are Signals under a different name:</p>
+  <Code code={signalsVueCode} lang="typescript" />
+
+  <h3>TC39 Proposal</h3>
+  <p>The <a href="https://github.com/tc39/proposal-signals">TC39 Signals proposal</a> (Stage 1) aims to standardize reactive primitives at the language level:</p>
+  <Code code={tc39ProposalCode} lang="typescript" />
+
+  <p>If adopted, Signals would become a <strong>browser-native primitive</strong>, removing the need for framework-specific implementations and enabling interoperability across Angular, Vue, Solid, and React.</p>
+
+  <hr />
+
+  <h2>Philosophy Alignment</h2>
+
+  <p>The web is converging on <strong>pull-based, graph-aware</strong> state management:</p>
+
+  <ul>
+    <li><strong>Zustand</strong> remains dominant for its simplicity, but it is push-based with no graph &mdash; the "old model" made pragmatic.</li>
+    <li><strong>Jotai</strong> and <strong>Signals</strong> represent the pull-based direction, with auto-tracked dependency graphs.</li>
+    <li><strong>TanStack Store</strong> bridges both worlds: push propagation with an explicit graph.</li>
+  </ul>
+
+  <p>The trend is clear: the web ecosystem is moving toward fine-grained, graph-based reactivity &mdash; whether through library-level atoms (Jotai), framework-level Signals (Angular, Vue, Solid), or language-level proposals (TC39).</p>
+
+  <div class="not-prose my-6 w-full overflow-auto rounded-lg border border-border bg-card">
+    <table class="w-full min-w-[600px] caption-bottom text-sm">
+      <thead class="[&_tr]:border-b">
+        <tr class="border-b transition-colors">
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Library</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Paradigm</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Graph</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Best For</th>
+        </tr>
+      </thead>
+      <tbody class="[&_tr:last-child]:border-0">
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Zustand</td>
+          <td class="p-4 align-middle text-muted-foreground">Push</td>
+          <td class="p-4 align-middle text-muted-foreground">None</td>
+          <td class="p-4 align-middle text-muted-foreground">Simple apps, minimal boilerplate</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Jotai</td>
+          <td class="p-4 align-middle text-muted-foreground">Pull</td>
+          <td class="p-4 align-middle text-muted-foreground">Implicit (auto)</td>
+          <td class="p-4 align-middle text-muted-foreground">Fine-grained React state, large atom graphs</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">TanStack Store</td>
+          <td class="p-4 align-middle text-muted-foreground">Push + Graph</td>
+          <td class="p-4 align-middle text-muted-foreground">Explicit (deps)</td>
+          <td class="p-4 align-middle text-muted-foreground">Multi-framework apps, structured graphs</td>
+        </tr>
+        <tr class="transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Signals</td>
+          <td class="p-4 align-middle text-muted-foreground">Pull</td>
+          <td class="p-4 align-middle text-muted-foreground">Implicit (auto)</td>
+          <td class="p-4 align-middle text-muted-foreground">Framework-native reactivity</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</DocsLayout>

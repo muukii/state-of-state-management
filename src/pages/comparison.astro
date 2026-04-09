@@ -1,0 +1,286 @@
+---
+import DocsLayout from '../layouts/DocsLayout.astro';
+import { Code } from 'astro:components';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const vergeDoubledCode = `// Verge — Push, explicit derived
+let store = Store<MyState, Never>(initialState: .init())
+
+let doubled = store.derived(.map(\\.count).map { $0 * 2 })
+
+store.commit { $0.count = 5 }
+// doubled pushes 10 to subscribers`;
+
+const tcaDoubledCode = `// TCA — Push, computed property on State
+@Reducer
+struct Feature {
+  @ObservableState
+  struct State: Equatable {
+    var count = 0
+    var doubled: Int { count * 2 }  // plain computed
+  }
+
+  enum Action { case increment }
+
+  var body: some ReducerOf<Self> {
+    Reduce { state, action in
+      switch action {
+      case .increment:
+        state.count += 1
+        return .none
+      }
+    }
+  }
+}`;
+
+const atomsDoubledCode = `// Atoms — Push + implicit graph
+struct CountAtom: StateAtom, Hashable {
+  func defaultValue(context: Context) -> Int { 0 }
+}
+
+struct DoubledAtom: ValueAtom, Hashable {
+  func value(context: Context) -> Int {
+    context.watch(CountAtom()) * 2  // auto-tracked, push-propagated
+  }
+}`;
+
+const zustandDoubledCode = `// Zustand — Push, selector-based
+const useStore = create((set) => ({
+  count: 0,
+  increment: () => set((s) => ({ count: s.count + 1 })),
+}));
+
+// Derived via selector (no graph)
+function Doubled() {
+  const doubled = useStore((s) => s.count * 2);
+  return <span>{doubled}</span>;
+}`;
+
+const tanstackDoubledCode = `// TanStack Store — Push + explicit graph
+const countStore = new Store(0);
+
+const doubled = new Derived({
+  deps: [countStore],
+  fn: ({ currDepVals: [count] }) => count * 2,
+});`;
+
+const jotaiDoubledCode = `// Jotai — Pull, auto-tracked
+const countAtom = atom(0);
+
+const doubledAtom = atom((get) => get(countAtom) * 2);
+// dependency on countAtom registered via get()`;
+
+const ssgDoubledCode = `// swift-state-graph — Pull, DAG-based
+struct MyGraph {
+  @Stored var count: Int = 0
+
+  @Computed var doubled: Int {
+    count * 2  // auto-tracked via ThreadLocal
+  }
+}`;
+
+const composeDoubledCode = `// Compose derivedStateOf — Pull, Snapshot system
+@Composable
+fun DoubledDisplay(viewModel: MyViewModel) {
+  val count by viewModel.count.collectAsState()
+
+  val doubled by remember {
+    derivedStateOf { count * 2 }
+  }
+
+  Text("Doubled: $doubled")
+}`;
+---
+
+<DocsLayout title="Comparison" currentPath={`${base}/comparison/`}>
+  <h1>Comparison</h1>
+  <p class="text-lg text-muted-foreground !mt-2">
+    Side-by-side comparison of all surveyed libraries across key dimensions.
+  </p>
+
+  <hr />
+
+  <h2>Feature Matrix</h2>
+
+  <div class="not-prose my-6 w-full overflow-auto rounded-lg border border-border bg-card">
+    <table class="sticky-first-col w-full min-w-[1100px] caption-bottom text-sm">
+      <thead class="[&_tr]:border-b">
+        <tr class="border-b transition-colors">
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground bg-card">Dimension</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Verge</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">TCA</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Atoms</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Zustand</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">TanStack Store</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Jotai</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">swift-state-graph</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Compose derivedStateOf</th>
+        </tr>
+      </thead>
+      <tbody class="[&_tr:last-child]:border-0">
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground bg-card">Paradigm</td>
+          <td class="p-4 align-middle text-muted-foreground">Push</td>
+          <td class="p-4 align-middle text-muted-foreground">Push</td>
+          <td class="p-4 align-middle text-muted-foreground">Push</td>
+          <td class="p-4 align-middle text-muted-foreground">Push</td>
+          <td class="p-4 align-middle text-muted-foreground">Push</td>
+          <td class="p-4 align-middle text-muted-foreground">Pull</td>
+          <td class="p-4 align-middle text-muted-foreground">Pull</td>
+          <td class="p-4 align-middle text-muted-foreground">Pull</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground bg-card">Graph</td>
+          <td class="p-4 align-middle text-muted-foreground">Explicit</td>
+          <td class="p-4 align-middle text-muted-foreground">None</td>
+          <td class="p-4 align-middle text-muted-foreground">Implicit</td>
+          <td class="p-4 align-middle text-muted-foreground">None</td>
+          <td class="p-4 align-middle text-muted-foreground">Explicit</td>
+          <td class="p-4 align-middle text-muted-foreground">Implicit</td>
+          <td class="p-4 align-middle text-muted-foreground">Implicit</td>
+          <td class="p-4 align-middle text-muted-foreground">Implicit</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground bg-card">Primitive</td>
+          <td class="p-4 align-middle text-muted-foreground">Store</td>
+          <td class="p-4 align-middle text-muted-foreground">Store + Reducer</td>
+          <td class="p-4 align-middle text-muted-foreground">Atom</td>
+          <td class="p-4 align-middle text-muted-foreground">Store</td>
+          <td class="p-4 align-middle text-muted-foreground">Store + Derived</td>
+          <td class="p-4 align-middle text-muted-foreground">Atom</td>
+          <td class="p-4 align-middle text-muted-foreground">Stored + Computed</td>
+          <td class="p-4 align-middle text-muted-foreground">State + derivedStateOf</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground bg-card">Derived State</td>
+          <td class="p-4 align-middle text-muted-foreground">Derived pipeline</td>
+          <td class="p-4 align-middle text-muted-foreground">Computed property</td>
+          <td class="p-4 align-middle text-muted-foreground">ValueAtom</td>
+          <td class="p-4 align-middle text-muted-foreground">Selector function</td>
+          <td class="p-4 align-middle text-muted-foreground">Derived class</td>
+          <td class="p-4 align-middle text-muted-foreground">Derived atom</td>
+          <td class="p-4 align-middle text-muted-foreground">@Computed node</td>
+          <td class="p-4 align-middle text-muted-foreground">derivedStateOf block</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground bg-card">Dep. Tracking</td>
+          <td class="p-4 align-middle text-muted-foreground">Manual (pipeline)</td>
+          <td class="p-4 align-middle text-muted-foreground">Manual</td>
+          <td class="p-4 align-middle text-muted-foreground">Auto (watch)</td>
+          <td class="p-4 align-middle text-muted-foreground">Manual (selector)</td>
+          <td class="p-4 align-middle text-muted-foreground">Manual (deps array)</td>
+          <td class="p-4 align-middle text-muted-foreground">Auto (get)</td>
+          <td class="p-4 align-middle text-muted-foreground">Auto (ThreadLocal)</td>
+          <td class="p-4 align-middle text-muted-foreground">Auto (Snapshot)</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground bg-card">Evaluation</td>
+          <td class="p-4 align-middle text-muted-foreground">Eager</td>
+          <td class="p-4 align-middle text-muted-foreground">Eager</td>
+          <td class="p-4 align-middle text-muted-foreground">Eager (topo sort)</td>
+          <td class="p-4 align-middle text-muted-foreground">Eager</td>
+          <td class="p-4 align-middle text-muted-foreground">Eager</td>
+          <td class="p-4 align-middle text-muted-foreground">Lazy</td>
+          <td class="p-4 align-middle text-muted-foreground">Lazy</td>
+          <td class="p-4 align-middle text-muted-foreground">Lazy</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground bg-card">Composition</td>
+          <td class="p-4 align-middle text-muted-foreground">Store nesting</td>
+          <td class="p-4 align-middle text-muted-foreground">Scope / ifLet / forEach</td>
+          <td class="p-4 align-middle text-muted-foreground">Atom composition</td>
+          <td class="p-4 align-middle text-muted-foreground">Slices</td>
+          <td class="p-4 align-middle text-muted-foreground">Store + Derived graph</td>
+          <td class="p-4 align-middle text-muted-foreground">Atom composition</td>
+          <td class="p-4 align-middle text-muted-foreground">Node graph (DAG)</td>
+          <td class="p-4 align-middle text-muted-foreground">Composable scope</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground bg-card">Thread Safety</td>
+          <td class="p-4 align-middle text-muted-foreground">Serialized commits</td>
+          <td class="p-4 align-middle text-muted-foreground">MainActor</td>
+          <td class="p-4 align-middle text-muted-foreground">Context isolation</td>
+          <td class="p-4 align-middle text-muted-foreground">Sync (single-threaded)</td>
+          <td class="p-4 align-middle text-muted-foreground">Sync</td>
+          <td class="p-4 align-middle text-muted-foreground">React reconciler</td>
+          <td class="p-4 align-middle text-muted-foreground">Per-node locking</td>
+          <td class="p-4 align-middle text-muted-foreground">Snapshot isolation</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground bg-card">Language</td>
+          <td class="p-4 align-middle text-muted-foreground">Swift</td>
+          <td class="p-4 align-middle text-muted-foreground">Swift</td>
+          <td class="p-4 align-middle text-muted-foreground">Swift</td>
+          <td class="p-4 align-middle text-muted-foreground">TypeScript</td>
+          <td class="p-4 align-middle text-muted-foreground">TypeScript</td>
+          <td class="p-4 align-middle text-muted-foreground">TypeScript</td>
+          <td class="p-4 align-middle text-muted-foreground">Swift</td>
+          <td class="p-4 align-middle text-muted-foreground">Kotlin</td>
+        </tr>
+        <tr class="transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground bg-card">Framework</td>
+          <td class="p-4 align-middle text-muted-foreground">SwiftUI / UIKit</td>
+          <td class="p-4 align-middle text-muted-foreground">SwiftUI</td>
+          <td class="p-4 align-middle text-muted-foreground">SwiftUI</td>
+          <td class="p-4 align-middle text-muted-foreground">React</td>
+          <td class="p-4 align-middle text-muted-foreground">React / Vue / Solid / Angular</td>
+          <td class="p-4 align-middle text-muted-foreground">React</td>
+          <td class="p-4 align-middle text-muted-foreground">SwiftUI / UIKit</td>
+          <td class="p-4 align-middle text-muted-foreground">Jetpack Compose</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr />
+
+  <h2>Code Comparison: Deriving "doubled" from "count"</h2>
+
+  <p>The simplest possible derived state: compute <code>doubled = count * 2</code>. This isolates each library's approach to dependency declaration and derived state evaluation.</p>
+
+  <h3>Push-based</h3>
+
+  <h4>Verge</h4>
+  <Code code={vergeDoubledCode} lang="swift" />
+
+  <h4>TCA</h4>
+  <Code code={tcaDoubledCode} lang="swift" />
+
+  <h4>Atoms</h4>
+  <Code code={atomsDoubledCode} lang="swift" />
+
+  <h4>Zustand</h4>
+  <Code code={zustandDoubledCode} lang="tsx" />
+
+  <h4>TanStack Store</h4>
+  <Code code={tanstackDoubledCode} lang="typescript" />
+
+  <h3>Pull-based</h3>
+
+  <h4>Jotai</h4>
+  <Code code={jotaiDoubledCode} lang="typescript" />
+
+  <h4>swift-state-graph</h4>
+  <Code code={ssgDoubledCode} lang="swift" />
+
+  <h4>Compose derivedStateOf</h4>
+  <Code code={composeDoubledCode} lang="kotlin" />
+
+  <hr />
+
+  <h2>References</h2>
+
+  <ul>
+    <li><a href="https://github.com/nicklockwood/SwiftFormat">Verge</a> &mdash; <a href="https://github.com/VergeGroup/swift-Verge">github.com/VergeGroup/swift-Verge</a></li>
+    <li><a href="https://github.com/pointfreeco/swift-composable-architecture">TCA</a> &mdash; <a href="https://github.com/pointfreeco/swift-composable-architecture">github.com/pointfreeco/swift-composable-architecture</a></li>
+    <li><a href="https://github.com/ra1028/swiftui-atom-properties">Atoms</a> &mdash; <a href="https://github.com/ra1028/swiftui-atom-properties">github.com/ra1028/swiftui-atom-properties</a></li>
+    <li><a href="https://github.com/pmndrs/zustand">Zustand</a> &mdash; <a href="https://github.com/pmndrs/zustand">github.com/pmndrs/zustand</a></li>
+    <li><a href="https://github.com/TanStack/store">TanStack Store</a> &mdash; <a href="https://github.com/TanStack/store">github.com/TanStack/store</a></li>
+    <li><a href="https://github.com/pmndrs/jotai">Jotai</a> &mdash; <a href="https://github.com/pmndrs/jotai">github.com/pmndrs/jotai</a></li>
+    <li><a href="https://github.com/nicklockwood/SwiftFormat">swift-state-graph</a> &mdash; <a href="https://github.com/nicklockwood/SwiftFormat">github.com (see project repository)</a></li>
+    <li><a href="https://developer.android.com/jetpack/compose/side-effects#derivedstateof">Compose derivedStateOf</a> &mdash; <a href="https://developer.android.com/jetpack/compose/side-effects#derivedstateof">Android Developer Docs</a></li>
+    <li><a href="https://github.com/nicklockwood/SwiftFormat">ReactiveState-Kotlin</a> &mdash; <a href="https://github.com/nicklockwood/SwiftFormat">github.com (see project repository)</a></li>
+    <li><a href="https://github.com/tc39/proposal-signals">TC39 Signals Proposal</a> &mdash; <a href="https://github.com/tc39/proposal-signals">github.com/tc39/proposal-signals</a></li>
+  </ul>
+</DocsLayout>

@@ -1,0 +1,299 @@
+---
+import DocsLayout from '../layouts/DocsLayout.astro';
+import { Code } from 'astro:components';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const jotaiBasicCode = `import { atom, useAtom } from 'jotai';
+
+// Primitive atom — writable source of truth
+const countAtom = atom(0);
+
+// Derived atom — auto-tracked via get()
+const doubledAtom = atom((get) => get(countAtom) * 2);
+
+// Async derived atom
+const userAtom = atom(async (get) => {
+  const id = get(userIdAtom);
+  return await fetchUser(id);
+});`;
+
+const jotaiComponentCode = `function Counter() {
+  const [count, setCount] = useAtom(countAtom);
+  const [doubled] = useAtom(doubledAtom);
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <p>Doubled: {doubled}</p>
+      <button onClick={() => setCount((c) => c + 1)}>+</button>
+    </div>
+  );
+}`;
+
+const jotaiDerivedCode = `// Bottom-up composition: atoms compose into atoms
+const firstNameAtom = atom('Alice');
+const lastNameAtom = atom('Smith');
+
+// Derived: automatically depends on both
+const fullNameAtom = atom((get) => {
+  return \`\${get(firstNameAtom)} \${get(lastNameAtom)}\`;
+});
+
+// Writable derived atom
+const uppercaseNameAtom = atom(
+  (get) => get(fullNameAtom).toUpperCase(),
+  (get, set, newName: string) => {
+    const [first, ...rest] = newName.split(' ');
+    set(firstNameAtom, first);
+    set(lastNameAtom, rest.join(' '));
+  }
+);`;
+
+const ssgDefinitionCode = `import StateGraph
+
+struct AppGraph {
+  // Stored — writable source of truth
+  @Stored var count: Int = 0
+  @Stored var name: String = "Alice"
+
+  // Computed — pull-based derived state
+  @Computed var doubled: Int {
+    count * 2  // dependency on 'count' auto-tracked
+  }
+
+  @Computed var greeting: String {
+    "Hello, \\(name)! (\\(doubled))"
+    // depends on 'name' and 'doubled' (transitive: 'count')
+  }
+}`;
+
+const ssgTrackingCode = `// ThreadLocal-based auto-tracking
+// When a Computed node evaluates, it sets a ThreadLocal flag.
+// Any Stored/Computed node read during evaluation
+// registers itself as a dependency automatically.
+//
+// This is the same mechanism as:
+//   - Jotai's get() tracking
+//   - Vue 3's reactive() tracking
+//   - Compose's Snapshot read observation`;
+
+const ssgSwiftUICode = `struct CounterView: View {
+  @GraphState var graph = AppGraph()
+
+  var body: some View {
+    VStack {
+      Text("Count: \\(graph.count)")
+      Text("Doubled: \\(graph.doubled)")
+      Text(graph.greeting)
+      Button("+") { graph.count += 1 }
+    }
+  }
+}`;
+
+const ssgLazyCode = `// Lazy invalidation strategy:
+// 1. When 'count' changes, 'doubled' is marked DIRTY (not recomputed)
+// 2. When 'doubled' is READ, it checks if dirty:
+//    - If dirty: recompute, cache result, mark clean
+//    - If clean: return cached value
+// 3. Transitively: 'greeting' is also marked dirty
+//    but only recomputed when actually accessed
+
+// Per-node locking for thread safety:
+// Each node has its own lock, avoiding global contention`;
+
+const ssgStorageCode = `// Storage protocol — extensible persistence
+protocol Storage {
+  associatedtype Value
+  func get() -> Value
+  func set(_ value: Value)
+}
+
+// Built-in: InMemoryStorage, UserDefaultsStorage
+// Custom: CloudKitStorage, SQLiteStorage, etc.`;
+
+const composeDerivedCode = `@Composable
+fun FilteredList(viewModel: ListViewModel) {
+  val items by viewModel.items.collectAsState()
+  val filter by viewModel.filter.collectAsState()
+
+  // derivedStateOf: pull-based, conditional invalidation
+  val filteredItems by remember {
+    derivedStateOf {
+      items.filter { it.matches(filter) }
+      // Compose Snapshot system tracks reads of 'items' and 'filter'
+      // Only re-computes when those specific values change
+    }
+  }
+
+  LazyColumn {
+    items(filteredItems) { item ->
+      ItemRow(item)
+    }
+  }
+}`;
+
+const composeSnapshotCode = `// How Compose Snapshot system works:
+// 1. derivedStateOf { ... } creates a DerivedSnapshotState
+// 2. During evaluation, all State<T> reads are recorded
+// 3. On next frame, Compose checks if recorded states changed
+// 4. Only if changed: re-evaluate the derivedStateOf block
+// 5. Only if result differs: recompose the reading Composable
+//
+// Key limitation: UI-layer only — cannot use in ViewModel/Repository`;
+
+const reactiveStateCode = `// ReactiveState-Kotlin: pull + graph for business logic
+val base = reactiveState(0)
+val extra = reactiveState(10)
+
+val total = derived {
+  get(base) + get(extra)
+  // auto-tracked via get()
+}
+
+// Observe changes
+total.observe { value ->
+  println("Total is now: $value")
+}
+
+// Mutate sources
+base.value = 5   // total becomes 15
+extra.value = 20  // total becomes 25`;
+
+const reactiveStateKmpCode = `// Kotlin Multiplatform support
+// Shared module (commonMain):
+class CounterModel {
+  val count = reactiveState(0)
+  val doubled = derived { get(count) * 2 }
+
+  fun increment() { count.value++ }
+}
+
+// Android: model.doubled.observe { ... }
+// iOS:     model.doubled.observe { ... }  (via KMP bridge)`;
+---
+
+<DocsLayout title="Pull-based Libraries" currentPath={`${base}/pull/`}>
+  <h1>Pull-based Libraries</h1>
+  <p class="text-lg text-muted-foreground !mt-2">
+    Deep dives into libraries where consumers read state on demand and dependencies are tracked automatically.
+  </p>
+
+  <hr />
+
+  <!-- Jotai -->
+  <h2 id="jotai">Jotai</h2>
+
+  <p><strong>Platform:</strong> TypeScript (React) &nbsp;|&nbsp; <strong>Paradigm:</strong> Pull, bottom-up atoms</p>
+
+  <p>Jotai provides atomic state management for React. Atoms are the smallest units of state, and derived atoms are created by composing other atoms via <code>get()</code>. Dependencies are auto-tracked: calling <code>get(someAtom)</code> inside a derived atom registers a dependency.</p>
+
+  <h3>Atom Definitions</h3>
+  <Code code={jotaiBasicCode} lang="typescript" />
+
+  <h3>React Integration</h3>
+  <Code code={jotaiComponentCode} lang="tsx" />
+
+  <h3>Bottom-up Composition</h3>
+  <p>Jotai's key insight is <strong>bottom-up composition</strong>: atoms compose into atoms. State is built from small, independent pieces rather than top-down slices of a single store:</p>
+  <Code code={jotaiDerivedCode} lang="typescript" />
+
+  <h3>Relationship to Recoil</h3>
+  <p>Jotai was inspired by <a href="https://recoiljs.org/">Recoil</a> (Facebook's experimental atomic state library for React) but takes a simpler approach: no string keys, no <code>RecoilRoot</code> required (atoms work with React's built-in context), and a smaller API surface. While Recoil is no longer actively maintained, Jotai has become the de facto standard for atomic state in React.</p>
+
+  <h3>Trade-offs</h3>
+  <ul>
+    <li><strong>Strengths:</strong> Minimal API, auto-tracking, async support, bottom-up composition, React Suspense integration</li>
+    <li><strong>Weaknesses:</strong> React-only, debugging atomic graphs can be challenging, no built-in devtools (community solutions exist)</li>
+  </ul>
+
+  <hr />
+
+  <!-- swift-state-graph -->
+  <h2 id="swift-state-graph">swift-state-graph</h2>
+
+  <p><strong>Platform:</strong> Swift 6.0+ (SwiftUI &amp; UIKit) &nbsp;|&nbsp; <strong>Paradigm:</strong> Pull, DAG-based</p>
+
+  <p>swift-state-graph is a pull-based state management library that models state as a <strong>directed acyclic graph (DAG)</strong>. It uses <code>Stored</code> nodes for source state and <code>Computed</code> nodes for derived state, with ThreadLocal-based auto-tracking for dependency discovery.</p>
+
+  <h3>Graph Definition</h3>
+  <Code code={ssgDefinitionCode} lang="swift" />
+
+  <h3>ThreadLocal Auto-tracking</h3>
+  <p>Dependencies are discovered automatically at runtime. When a <code>Computed</code> node evaluates, it uses a ThreadLocal flag to record which nodes were accessed:</p>
+  <Code code={ssgTrackingCode} lang="swift" />
+
+  <h3>SwiftUI Integration</h3>
+  <Code code={ssgSwiftUICode} lang="swift" />
+
+  <h3>Lazy Invalidation</h3>
+  <p>swift-state-graph uses a <strong>lazy invalidation</strong> strategy: when a source changes, derived nodes are marked dirty but <strong>not recomputed</strong> until actually read. This avoids unnecessary computation and guarantees glitch-free reads:</p>
+  <Code code={ssgLazyCode} lang="swift" />
+
+  <h3>Swift Macros</h3>
+  <p>The library leverages Swift macros (<code>@Stored</code>, <code>@Computed</code>) to reduce boilerplate. The macros generate the underlying node infrastructure, storage accessors, and dependency-tracking wrappers.</p>
+
+  <h3>Storage Protocol</h3>
+  <p>The <code>Storage</code> protocol allows pluggable persistence backends:</p>
+  <Code code={ssgStorageCode} lang="swift" />
+
+  <h3>Thread Safety</h3>
+  <p>Each node has its own lock (per-node locking), avoiding the global-lock bottleneck. The ThreadLocal-based tracking is inherently thread-safe since each thread has its own tracking context.</p>
+
+  <h3>Trade-offs</h3>
+  <ul>
+    <li><strong>Strengths:</strong> Glitch-free, lazy evaluation, auto-tracking, per-node locking, UIKit + SwiftUI, extensible storage</li>
+    <li><strong>Weaknesses:</strong> Newest library (smallest ecosystem), requires Swift 6.0+, DAG mental model may be unfamiliar</li>
+  </ul>
+
+  <hr />
+
+  <!-- Compose derivedStateOf -->
+  <h2 id="compose-derivedstateof">Jetpack Compose <code>derivedStateOf</code></h2>
+
+  <p><strong>Platform:</strong> Android (Jetpack Compose) &nbsp;|&nbsp; <strong>Paradigm:</strong> Pull + Graph, UI-layer only</p>
+
+  <p>Jetpack Compose's <code>derivedStateOf</code> provides pull-based, graph-aware derived state within the Compose runtime. It uses the <strong>Snapshot system</strong> to automatically track which <code>State&lt;T&gt;</code> values are read during evaluation.</p>
+
+  <h3>Usage</h3>
+  <Code code={composeDerivedCode} lang="kotlin" />
+
+  <h3>Snapshot System</h3>
+  <Code code={composeSnapshotCode} lang="kotlin" />
+
+  <h3>Conditional Invalidation</h3>
+  <p>A key feature: <code>derivedStateOf</code> performs <strong>two-level checking</strong>. First, it checks if the tracked source states changed. If they did, it re-evaluates the block. Then it checks if the <em>result</em> changed. Only if the result is different does it trigger recomposition. This prevents cascading re-renders when derived values are stable.</p>
+
+  <h3>Limitation: UI-layer Only</h3>
+  <p>The Snapshot system is part of the Compose runtime. It cannot be used in ViewModel, Repository, or other business logic layers. For those layers, Android developers fall back to <code>StateFlow.combine()</code> &mdash; a push-based, manual approach.</p>
+
+  <h3>Trade-offs</h3>
+  <ul>
+    <li><strong>Strengths:</strong> Auto-tracking, conditional invalidation, built into Compose, no extra dependency</li>
+    <li><strong>Weaknesses:</strong> UI-layer only, cannot model business-logic dependencies, Snapshot overhead</li>
+  </ul>
+
+  <hr />
+
+  <!-- ReactiveState-Kotlin -->
+  <h2 id="reactivestate-kotlin">ReactiveState-Kotlin</h2>
+
+  <p><strong>Platform:</strong> Kotlin (Kotlin Multiplatform) &nbsp;|&nbsp; <strong>Paradigm:</strong> Pull + Graph, business logic</p>
+
+  <p>ReactiveState-Kotlin provides pull-based reactive state with automatic dependency tracking via <code>get()</code> &mdash; similar to Jotai's model but in Kotlin. Unlike Compose's <code>derivedStateOf</code>, it works in any layer, including ViewModels and shared business logic.</p>
+
+  <h3>Basic Usage</h3>
+  <Code code={reactiveStateCode} lang="kotlin" />
+
+  <h3>Kotlin Multiplatform</h3>
+  <Code code={reactiveStateKmpCode} lang="kotlin" />
+
+  <h3>Relationship to Compose</h3>
+  <p>ReactiveState-Kotlin fills the gap that <code>derivedStateOf</code> leaves: graph-based derived state for business logic. While <code>derivedStateOf</code> handles the UI layer, ReactiveState-Kotlin handles the model layer. In practice, they can complement each other.</p>
+
+  <h3>Trade-offs</h3>
+  <ul>
+    <li><strong>Strengths:</strong> Auto-tracking, works in any layer, KMP support, familiar <code>get()</code> pattern</li>
+    <li><strong>Weaknesses:</strong> Not mainstream, smaller community than StateFlow/Compose, less ecosystem tooling</li>
+  </ul>
+</DocsLayout>

@@ -1,97 +1,46 @@
 ---
-import { getCollection } from 'astro:content';
-import BaseLayout from '../layouts/BaseLayout.astro';
-import SiteHeader from '../components/SiteHeader.astro';
-import SidebarNav from '../components/SidebarNav.astro';
-import TocRail from '../components/TocRail.astro';
-import Hero from '../components/Hero.astro';
-import Footer from '../components/Footer.astro';
+import DocsLayout from '../layouts/DocsLayout.astro';
+import Badge from '../components/ui/Badge.astro';
 import Mermaid from '../components/Mermaid.astro';
-import Separator from '../components/ui/Separator.astro';
 import Card from '../components/ui/Card.astro';
 import CardHeader from '../components/ui/CardHeader.astro';
 import CardTitle from '../components/ui/CardTitle.astro';
 import CardContent from '../components/ui/CardContent.astro';
 
-const allSections = await getCollection('sections');
-const sorted = allSections.sort((a, b) => a.data.order - b.data.order);
-
-const rendered = await Promise.all(
-  sorted.map(async (section) => {
-    const { Content } = await section.render();
-    return {
-      id: section.slug,
-      title: section.data.title,
-      Content,
-    };
-  })
-);
-
-const tocItems = rendered.map(({ id, title }) => ({ id, title }));
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 
-<BaseLayout
-  title="State of State Management"
-  description="The rise of graph-based state management across Web, iOS, and Android."
->
-  <SiteHeader />
+<DocsLayout title="Introduction" currentPath={`${base}/`}>
+  <Badge variant="outline" class="not-prose text-muted-foreground mb-4">
+    Last updated Apr 2026
+  </Badge>
+  <h1>State of State Management</h1>
+  <p class="text-lg text-muted-foreground !mt-2">
+    A comparison of state management architectures across Web, iOS, and Android.
+  </p>
 
-  <div class="mx-auto flex max-w-screen-2xl gap-8 px-4 sm:px-6 lg:px-8">
-    <SidebarNav sections={tocItems} />
+  <hr />
 
-    <main class="min-w-0 flex-1 py-10 lg:py-14">
-      <div class="mx-auto max-w-3xl">
-        <Hero />
+  <h2>Two Independent Axes</h2>
 
-        <details class="lg:hidden mb-10 rounded-lg border border-border p-4">
-          <summary class="cursor-pointer text-sm font-medium text-foreground">
-            Contents
-          </summary>
-          <ul class="mt-3 flex flex-col gap-1">
-            {tocItems.map(({ id, title }) => (
-              <li>
-                <a
-                  href={`#${id}`}
-                  class="block rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                >
-                  {title}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </details>
+  <p>This report organizes the state management landscape along two independent axes:</p>
 
-        <article class="prose dark:prose-invert max-w-none
-          prose-headings:scroll-mt-20 prose-headings:tracking-tight
-          prose-h2:text-2xl prose-h2:font-semibold prose-h2:mt-0 prose-h2:mb-6
-          prose-h3:text-lg prose-h3:font-semibold prose-h3:mt-10 prose-h3:mb-4
-          prose-h4:text-base prose-h4:font-semibold prose-h4:mt-8 prose-h4:mb-3
-          prose-p:leading-7
-          prose-li:leading-7
-          prose-a:underline prose-a:underline-offset-4 prose-a:decoration-border hover:prose-a:decoration-foreground
-          prose-code:rounded prose-code:border prose-code:border-border prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:text-[0.85em] prose-code:font-normal prose-code:before:content-none prose-code:after:content-none
-          prose-pre:rounded-lg prose-pre:border prose-pre:border-border
-          [&_pre_code]:border-0 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:rounded-none [&_pre_code]:text-[inherit]
-          prose-hr:hidden
-          prose-ul:my-4 prose-ol:my-4
-          prose-strong:font-semibold">
-          {rendered.map(({ id, title, Content }, i) => (
-            <>
-              {i > 0 && <Separator class="my-12 not-prose" />}
-              <section id={id} class="scroll-mt-20">
-                <h2>{title}</h2>
-                <Content />
+  <ol>
+    <li><strong><a href={`${base}/push-vs-pull/`}>Push vs Pull</a></strong> — how state changes flow to consumers</li>
+    <li><strong>Graph-based dependency tracking</strong> — a technique for managing derived state, applicable to either push or pull systems</li>
+  </ol>
 
-                {id === '02-push-vs-graph' && (
-                  <div class="not-prose mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                          Push-based
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <Mermaid chart={`
+  <p>Push and Pull describe the <strong>direction of data flow</strong>. Graph describes <strong>how derived state dependencies are managed</strong> — and it can appear in both push and pull architectures.</p>
+
+  <div class="not-prose mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
+    <Card>
+      <CardHeader>
+        <CardTitle class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Push-based
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Mermaid chart={`
 graph TD
   Store["🔄 Store"]
   Store -->|notify| SubA["Sub A"]
@@ -101,16 +50,16 @@ graph TD
   SubB -->|"selector ✗"| Skip["skip"]
   SubC -->|"selector ✓"| RenderC["re-render"]
 `} />
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader>
-                        <CardTitle class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                          Graph-based
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <Mermaid chart={`
+      </CardContent>
+    </Card>
+    <Card>
+      <CardHeader>
+        <CardTitle class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Pull-based
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Mermaid chart={`
 graph TD
   Count["count ●"]
   User["user"]
@@ -120,19 +69,72 @@ graph TD
   Doubled --> RenderA["re-render"]
   Filtered --> RenderB["re-render"]
 `} />
-                      </CardContent>
-                    </Card>
-                  </div>
-                )}
-              </section>
-            </>
-          ))}
-        </article>
-      </div>
-    </main>
-
-    <TocRail sections={tocItems} />
+      </CardContent>
+    </Card>
   </div>
 
-  <Footer />
-</BaseLayout>
+  <hr />
+
+  <h2>Graph-based Dependency Tracking</h2>
+
+  <p><strong>Every state management system needs derived state.</strong> Whether push or pull, applications inevitably need to compute values from other values — filtered lists, aggregated counts, combined UI states.</p>
+
+  <p>The question is: <strong>how are the dependencies between source and derived state managed?</strong></p>
+
+  <h3>1. Automatic / Implicit</h3>
+  <p>The act of "reading" a state node automatically registers a dependency.</p>
+  <ul>
+    <li><strong>Jotai</strong>: <code>atom(get =&gt; get(otherAtom))</code></li>
+    <li><strong>Atoms</strong>: <code>context.watch(OtherAtom())</code> (push propagation)</li>
+    <li><strong>swift-state-graph</strong>: ThreadLocal access observation</li>
+    <li><strong>Jetpack Compose</strong>: Snapshot system in <code>derivedStateOf {"{}"}</code></li>
+  </ul>
+
+  <h3>2. Explicit / Declarative</h3>
+  <p>The developer declares dependencies via a <code>deps</code> array or pipeline.</p>
+  <ul>
+    <li><strong>TanStack Store</strong>: <code>new Derived({"{ deps: [storeA, storeB], fn: ... }"})</code></li>
+    <li><strong>Verge</strong>: <code>store.derived(.select(\.count))</code></li>
+  </ul>
+
+  <h3>3. No Graph (Manual)</h3>
+  <p>No dependency graph. The developer wires everything by hand.</p>
+  <ul>
+    <li><strong>Zustand</strong>: Selectors with <code>Object.is</code> equality</li>
+    <li><strong>TCA</strong>: Computed properties on State struct</li>
+    <li><strong>StateFlow</strong>: <code>combine(a, b) {"{ ... }"}</code></li>
+  </ul>
+
+  <hr />
+
+  <h2>Cross-platform Summary</h2>
+
+  <div class="not-prose my-6 w-full overflow-auto rounded-lg border border-border bg-card">
+    <table class="w-full min-w-[600px] caption-bottom text-sm">
+      <thead class="[&_tr]:border-b">
+        <tr class="border-b transition-colors">
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Platform</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Push-based (Mainstream)</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Pull-based / Graph (Emerging)</th>
+        </tr>
+      </thead>
+      <tbody class="[&_tr:last-child]:border-0">
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground"><a href={`${base}/web/`} class="underline underline-offset-4">Web</a></td>
+          <td class="p-4 align-middle text-muted-foreground">Redux, Zustand</td>
+          <td class="p-4 align-middle text-muted-foreground">Jotai, Signals, TanStack Store (push+graph)</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground"><a href={`${base}/ios/`} class="underline underline-offset-4">iOS</a></td>
+          <td class="p-4 align-middle text-muted-foreground">Verge, TCA</td>
+          <td class="p-4 align-middle text-muted-foreground">Atoms (push+graph), swift-state-graph</td>
+        </tr>
+        <tr class="transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground"><a href={`${base}/android/`} class="underline underline-offset-4">Android</a></td>
+          <td class="p-4 align-middle text-muted-foreground">ViewModel + StateFlow</td>
+          <td class="p-4 align-middle text-muted-foreground">Compose derivedStateOf (UI layer only)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</DocsLayout>

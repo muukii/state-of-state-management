@@ -1,0 +1,197 @@
+---
+import DocsLayout from '../layouts/DocsLayout.astro';
+import { Code } from 'astro:components';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const pushExample = `// Push-based: store notifies subscribers
+store.subscribe { newState in
+  // called every time the store changes
+  updateUI(newState)
+}`;
+
+const pullExample = `// Pull-based: consumer reads on demand
+let doubled = atom { get in
+  get(countAtom) * 2   // dependency auto-tracked
+}`;
+
+const backpressureExample = `// Debounce workaround for backpressure
+store.$state
+  .debounce(for: .milliseconds(16), scheduler: RunLoop.main)
+  .sink { state in
+    self.render(state)
+  }`;
+
+const reentrantExample = `// Dangerous: mutation inside a notification callback
+store.subscribe { state in
+  if state.count > 10 {
+    store.commit { $0.count = 0 }  // re-entrant update!
+  }
+}`;
+
+const trampolineExample = `// TCA action buffering (trampoline pattern)
+// When a reducer sends an action while another is running,
+// TCA enqueues it instead of processing immediately.
+case .buttonTapped:
+  state.count += 1
+  return .send(.analytics(.log))  // queued, not recursive`;
+---
+
+<DocsLayout title="Push vs Pull" currentPath={`${base}/push-vs-pull/`}>
+  <h1>Push vs Pull</h1>
+  <p class="text-lg text-muted-foreground !mt-2">
+    The two fundamental paradigms for propagating state changes to consumers.
+  </p>
+
+  <hr />
+
+  <h2>Push-based</h2>
+
+  <p>In a push-based system, the <strong>store</strong> is responsible for notifying subscribers whenever state changes. The producer decides when and what to send.</p>
+
+  <p><strong>Representatives:</strong> Verge, TCA, Zustand, Redux, ViewModel + StateFlow</p>
+
+  <p>The mental model: <em>"I changed &mdash; here is the new value."</em></p>
+
+  <Code code={pushExample} lang="swift" />
+
+  <h3>Characteristics</h3>
+  <ul>
+    <li>Store maintains a set of listeners/subscribers</li>
+    <li>Every mutation triggers a notification cycle</li>
+    <li>Consumers use selectors or equality checks to filter irrelevant updates</li>
+    <li>Simple to reason about for single-store architectures</li>
+  </ul>
+
+  <hr />
+
+  <h2>Pull-based</h2>
+
+  <p>In a pull-based system, <strong>consumers</strong> read state on demand. The runtime tracks which pieces of state were accessed and only re-evaluates when those specific dependencies change.</p>
+
+  <p><strong>Representatives:</strong> Jotai, swift-state-graph, Signals (Angular, SolidJS, Vue 3, TC39 proposal)</p>
+
+  <p>The mental model: <em>"I need this value &mdash; give me the current result."</em></p>
+
+  <Code code={pullExample} lang="typescript" />
+
+  <h3>Characteristics</h3>
+  <ul>
+    <li>No broadcast &mdash; only accessed nodes are evaluated</li>
+    <li>Dependency graph is built automatically through access tracking</li>
+    <li>Lazy evaluation: derived values are only computed when read</li>
+    <li>Naturally avoids many push-based pitfalls (see below)</li>
+  </ul>
+
+  <hr />
+
+  <h2>Key Difference</h2>
+
+  <p>The fundamental distinction is <strong>who initiates the data flow</strong>:</p>
+
+  <ul>
+    <li><strong>Push:</strong> The producer says <em>"I changed"</em> and sends values downstream</li>
+    <li><strong>Pull:</strong> The consumer says <em>"I need this value"</em> and reads upstream</li>
+  </ul>
+
+  <p>This difference has deep implications for performance, consistency, and complexity &mdash; particularly as state graphs grow.</p>
+
+  <hr />
+
+  <h2>Inherent Push Challenges</h2>
+
+  <p>Push-based systems carry a set of <strong>inherent challenges</strong> that arise from the broadcast model itself. These are not bugs in specific libraries &mdash; they are structural consequences of the push paradigm.</p>
+
+  <h3>1. Backpressure</h3>
+
+  <p>When the <strong>producer emits faster than the consumer can process</strong>, updates pile up. In UI applications this often manifests as dropped frames or redundant renders.</p>
+
+  <p>Common workarounds include batching, debouncing, or throttling notifications:</p>
+
+  <Code code={backpressureExample} lang="swift" />
+
+  <p>In pull-based systems, backpressure is a non-issue: the consumer reads only when it is ready, and intermediate values are never materialized.</p>
+
+  <h3>2. Recursive / Reentrant Updates</h3>
+
+  <p>If a subscriber <strong>mutates the store inside a notification callback</strong>, it triggers a new notification cycle while the current one is still in progress. This can cause stack overflows, infinite loops, or corrupted state.</p>
+
+  <Code code={reentrantExample} lang="swift" />
+
+  <p>Libraries guard against this with assertions (Redux throws if you dispatch inside a reducer), locks, or queuing mechanisms &mdash; but the fundamental tension remains.</p>
+
+  <h3>3. Trampolining</h3>
+
+  <p>Trampolining is the standard solution to reentrant updates: instead of processing a nested mutation immediately, it is <strong>deferred to a queue</strong> and executed after the current notification cycle completes.</p>
+
+  <Code code={trampolineExample} lang="swift" />
+
+  <ul>
+    <li><strong>TCA:</strong> Actions sent during a reducer run are buffered and replayed sequentially</li>
+    <li><strong>Redux:</strong> "You may not call <code>store.dispatch()</code> while the reducer is executing" &mdash; a hard rule enforced at runtime</li>
+    <li><strong>Verge:</strong> Commit-based mutations that serialize state changes</li>
+  </ul>
+
+  <p>Pull-based systems sidestep trampolining entirely because there is no notification cycle to interrupt.</p>
+
+  <h3>4. Glitch Problem</h3>
+
+  <p>A <strong>glitch</strong> occurs when derived values observe <strong>partially propagated state</strong> &mdash; an inconsistent intermediate snapshot where some dependencies have updated but others have not.</p>
+
+  <p>Example: if <code>total = price * quantity</code>, and both <code>price</code> and <code>quantity</code> change in the same logical transaction, a push system may notify <code>total</code> after <code>price</code> updates but before <code>quantity</code> does, producing a briefly incorrect result.</p>
+
+  <p>Pull-based systems with lazy evaluation are <strong>glitch-free by construction</strong>: derived values are only computed when read, and by that time all upstream sources have already settled.</p>
+
+  <hr />
+
+  <h2>Summary</h2>
+
+  <div class="not-prose my-6 w-full overflow-auto rounded-lg border border-border bg-card">
+    <table class="w-full min-w-[600px] caption-bottom text-sm">
+      <thead class="[&_tr]:border-b">
+        <tr class="border-b transition-colors">
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Challenge</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Cause</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Typical Workaround</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Pull-based Equivalent</th>
+        </tr>
+      </thead>
+      <tbody class="[&_tr:last-child]:border-0">
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Backpressure</td>
+          <td class="p-4 align-middle text-muted-foreground">Producer faster than consumer</td>
+          <td class="p-4 align-middle text-muted-foreground">Batch / debounce / throttle</td>
+          <td class="p-4 align-middle text-muted-foreground">Non-issue &mdash; consumer reads when ready</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Reentrant Updates</td>
+          <td class="p-4 align-middle text-muted-foreground">Mutation inside notification</td>
+          <td class="p-4 align-middle text-muted-foreground">Assertions / locks / queue</td>
+          <td class="p-4 align-middle text-muted-foreground">No notification cycle to interrupt</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Trampolining</td>
+          <td class="p-4 align-middle text-muted-foreground">Queue-based deferral of nested mutations</td>
+          <td class="p-4 align-middle text-muted-foreground">Action buffering (TCA), dispatch rules (Redux)</td>
+          <td class="p-4 align-middle text-muted-foreground">Not needed &mdash; no broadcast loop</td>
+        </tr>
+        <tr class="transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Glitch Problem</td>
+          <td class="p-4 align-middle text-muted-foreground">Partial propagation of changes</td>
+          <td class="p-4 align-middle text-muted-foreground">Topological sort / transaction batching</td>
+          <td class="p-4 align-middle text-muted-foreground">Glitch-free by construction (lazy eval)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr />
+
+  <h2>Conclusion</h2>
+
+  <p>None of these challenges are <strong>fatal</strong> &mdash; every mature push-based library has developed effective mitigations. However, they represent <strong>inherent complexity</strong> that comes with the push model: complexity that library authors must address and that application developers must be aware of.</p>
+
+  <p>Pull-based systems avoid these issues structurally, but carry their own trade-offs: lazy evaluation can make debugging harder, dependency tracking adds runtime overhead, and the mental model requires a different way of thinking about state flow.</p>
+
+  <p>The choice between push and pull is not about which is "better" &mdash; it is about which set of trade-offs aligns with your architecture, team, and scale.</p>
+</DocsLayout>

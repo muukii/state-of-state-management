@@ -1,0 +1,264 @@
+---
+import DocsLayout from '../layouts/DocsLayout.astro';
+import { Code } from 'astro:components';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const viewModelCode = `class CounterViewModel : ViewModel() {
+  private val _count = MutableStateFlow(0)
+  val count: StateFlow<Int> = _count.asStateFlow()
+
+  private val _multiplier = MutableStateFlow(2)
+  val multiplier: StateFlow<Int> = _multiplier.asStateFlow()
+
+  // Derived state via combine() — manual wiring
+  val result: StateFlow<Int> = combine(
+    _count, _multiplier
+  ) { count, mult ->
+    count * mult
+  }.stateIn(
+    scope = viewModelScope,
+    started = SharingStarted.WhileSubscribed(5000),
+    initialValue = 0
+  )
+
+  fun increment() {
+    _count.value++
+  }
+
+  fun setMultiplier(value: Int) {
+    _multiplier.value = value
+  }
+}`;
+
+const viewModelViewCode = `@Composable
+fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
+  val count by viewModel.count.collectAsState()
+  val result by viewModel.result.collectAsState()
+
+  Column {
+    Text("Count: $count")
+    Text("Result: $result")
+    Button(onClick = { viewModel.increment() }) {
+      Text("+")
+    }
+  }
+}`;
+
+const derivedStateCode = `@Composable
+fun FilteredList(viewModel: ListViewModel) {
+  val items by viewModel.items.collectAsState()
+  val query by viewModel.query.collectAsState()
+
+  // Pull-based: Snapshot system tracks reads
+  val filteredItems by remember {
+    derivedStateOf {
+      if (query.isBlank()) items
+      else items.filter { it.name.contains(query, ignoreCase = true) }
+    }
+  }
+
+  // Only recomposes when filteredItems actually changes
+  LazyColumn {
+    items(filteredItems) { item ->
+      Text(item.name)
+    }
+  }
+}`;
+
+const derivedStateExplainCode = `// How derivedStateOf works under the hood:
+//
+// 1. Creates a DerivedSnapshotState object
+// 2. During first evaluation, Snapshot system records all
+//    State<T> reads (items, query in the example above)
+// 3. On subsequent frames, Compose checks:
+//    a. Did any recorded source states change?
+//       -> No: skip entirely (cheap check)
+//       -> Yes: re-evaluate the block
+//    b. Did the result change?
+//       -> No: don't recompose readers
+//       -> Yes: recompose affected Composables
+//
+// This two-level check prevents unnecessary recomposition
+// even when source data changes but derived result is stable`;
+
+const reactiveStateCode = `// ReactiveState-Kotlin: graph-based for business logic
+class ShoppingCartModel {
+  val items = reactiveState(listOf<CartItem>())
+  val taxRate = reactiveState(0.08)
+
+  val subtotal = derived {
+    get(items).sumOf { it.price * it.quantity }
+  }
+
+  val tax = derived {
+    get(subtotal) * get(taxRate)
+  }
+
+  val total = derived {
+    get(subtotal) + get(tax)
+  }
+
+  fun addItem(item: CartItem) {
+    items.value = items.value + item
+    // subtotal, tax, and total all update automatically
+  }
+}`;
+
+const reactiveStateObserveCode = `// Observing in Android
+class CartActivity : AppCompatActivity() {
+  private val model = ShoppingCartModel()
+
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+
+    // Observe derived state changes
+    model.total.observe { total ->
+      totalTextView.text = "Total: " + total
+    }
+
+    // Works with Compose too
+    // val total by model.total.collectAsState()
+  }
+}`;
+
+const reactiveStateKmpCode = `// Kotlin Multiplatform: share state logic
+// commonMain/
+class CounterModel {
+  val count = reactiveState(0)
+  val doubled = derived { get(count) * 2 }
+  fun increment() { count.value++ }
+}
+
+// androidMain/ — use in ViewModel
+// iosMain/   — bridge to Swift via KMP`;
+---
+
+<DocsLayout title="Android Platform" currentPath={`${base}/android/`}>
+  <h1>Android Platform</h1>
+  <p class="text-lg text-muted-foreground !mt-2">
+    State management in the Android ecosystem: ViewModel + StateFlow, Compose, and emerging alternatives.
+  </p>
+
+  <hr />
+
+  <h2 id="viewmodel-stateflow">ViewModel + StateFlow</h2>
+
+  <p><strong>Paradigm:</strong> Push &nbsp;|&nbsp; <strong>Status:</strong> Google's standard recommendation</p>
+
+  <p>The <code>ViewModel</code> + <code>StateFlow</code> pattern is the <strong>de facto standard</strong> for Android state management. ViewModels survive configuration changes, and <code>StateFlow</code> provides observable state streams that integrate with both Compose and the View system.</p>
+
+  <h3>ViewModel with Derived State</h3>
+  <Code code={viewModelCode} lang="kotlin" />
+
+  <h3>Compose Integration</h3>
+  <Code code={viewModelViewCode} lang="kotlin" />
+
+  <h3>Characteristics</h3>
+  <ul>
+    <li><strong>Manual wiring:</strong> Derived state requires explicit <code>combine()</code> calls listing all dependencies</li>
+    <li><strong><code>stateIn()</code> configuration:</strong> Must specify scope, sharing strategy, and initial value</li>
+    <li><strong>No dependency graph:</strong> Adding a new source to a derived value requires modifying the <code>combine()</code> call</li>
+    <li><strong>Lifecycle-aware:</strong> <code>WhileSubscribed(5000)</code> stops upstream collection when no subscribers remain for 5 seconds</li>
+  </ul>
+
+  <p>This pattern works well for straightforward cases but becomes verbose when the derived state graph is complex &mdash; every dependency must be manually listed in <code>combine()</code>.</p>
+
+  <hr />
+
+  <h2 id="compose-derivedstateof">Compose <code>derivedStateOf</code></h2>
+
+  <p><strong>Paradigm:</strong> Pull + Graph &nbsp;|&nbsp; <strong>Scope:</strong> UI-layer only</p>
+
+  <p>Jetpack Compose's <code>derivedStateOf</code> provides <strong>automatic dependency tracking</strong> within the Compose runtime. The Snapshot system records which <code>State&lt;T&gt;</code> values are read during evaluation and only re-evaluates when those specific values change.</p>
+
+  <h3>Usage</h3>
+  <Code code={derivedStateCode} lang="kotlin" />
+
+  <h3>How the Snapshot System Works</h3>
+  <Code code={derivedStateExplainCode} lang="kotlin" />
+
+  <h3>Key Strength: Conditional Invalidation</h3>
+  <p><code>derivedStateOf</code> performs a two-level check: first whether source states changed, then whether the derived result changed. This prevents cascading recomposition when source data changes but the derived value remains stable (e.g., a filter that produces the same list after a data refresh).</p>
+
+  <h3>Key Limitation: UI-layer Only</h3>
+  <p>The Snapshot system is <strong>part of the Compose runtime</strong>. It cannot be used in ViewModels, Repositories, or any non-Compose code. For business logic derived state, developers must fall back to <code>StateFlow.combine()</code> &mdash; losing the automatic tracking.</p>
+
+  <p>This creates a <strong>split model</strong>: automatic graph-based tracking in the UI layer, manual wiring everywhere else.</p>
+
+  <hr />
+
+  <h2 id="reactivestate-kotlin">ReactiveState-Kotlin</h2>
+
+  <p><strong>Paradigm:</strong> Pull + Graph &nbsp;|&nbsp; <strong>Scope:</strong> Business logic (any layer)</p>
+
+  <p>ReactiveState-Kotlin fills the gap that <code>derivedStateOf</code> leaves: <strong>graph-based derived state for business logic</strong>. It uses the familiar <code>get()</code> pattern (like Jotai) for automatic dependency tracking, and it works in any layer &mdash; ViewModel, Repository, shared KMP modules.</p>
+
+  <h3>Business Logic Example</h3>
+  <Code code={reactiveStateCode} lang="kotlin" />
+
+  <h3>Observing in Android</h3>
+  <Code code={reactiveStateObserveCode} lang="kotlin" />
+
+  <h3>Kotlin Multiplatform</h3>
+  <Code code={reactiveStateKmpCode} lang="kotlin" />
+
+  <h3>Characteristics</h3>
+  <ul>
+    <li>Auto-tracking via <code>get()</code> inside <code>derived {"{}"}</code></li>
+    <li>Works in any layer (not limited to UI)</li>
+    <li>Kotlin Multiplatform compatible</li>
+    <li>Transitive dependencies tracked automatically</li>
+  </ul>
+
+  <hr />
+
+  <h2>Why Graph-based Hasn't Taken Off on Android</h2>
+
+  <p>Despite the advantages of graph-based state management, the Android ecosystem has been slow to adopt it outside of Compose's UI layer. Several factors contribute:</p>
+
+  <h3>1. Google's Ecosystem Dominance</h3>
+  <p>Google provides an opinionated, well-documented stack: <code>ViewModel</code> + <code>StateFlow</code> + <code>Hilt</code> + <code>Room</code>. Most teams follow the official guidance, and Google's samples reinforce this pattern. Third-party state libraries face an uphill battle against the platform vendor's recommendations.</p>
+
+  <h3>2. MVI/MVVM Entrenchment</h3>
+  <p>The Android community has converged on MVI (Model-View-Intent) and MVVM patterns. These patterns work well with StateFlow and don't require dependency graphs. Libraries like Orbit MVI and MVIKotlin provide structured alternatives within the push-based paradigm.</p>
+
+  <h3>3. Flow as the Foundation</h3>
+  <p>Kotlin <code>Flow</code> is deeply integrated into the Android ecosystem: Room returns <code>Flow</code>, Retrofit integrates with <code>Flow</code>, DataStore uses <code>Flow</code>. The reactive foundation is push-based, making it natural to stay push-based for state management.</p>
+
+  <h3>4. Compose's Partial Solution</h3>
+  <p><code>derivedStateOf</code> solves the most visible pain point (UI-layer derived state) without requiring external libraries. For many teams, this is "good enough" &mdash; the remaining manual wiring in ViewModels is tolerable.</p>
+
+  <div class="not-prose my-6 w-full overflow-auto rounded-lg border border-border bg-card">
+    <table class="w-full min-w-[600px] caption-bottom text-sm">
+      <thead class="[&_tr]:border-b">
+        <tr class="border-b transition-colors">
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Approach</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Paradigm</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Scope</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Graph</th>
+        </tr>
+      </thead>
+      <tbody class="[&_tr:last-child]:border-0">
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">ViewModel + StateFlow</td>
+          <td class="p-4 align-middle text-muted-foreground">Push</td>
+          <td class="p-4 align-middle text-muted-foreground">All layers</td>
+          <td class="p-4 align-middle text-muted-foreground">None (manual combine)</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Compose derivedStateOf</td>
+          <td class="p-4 align-middle text-muted-foreground">Pull + Graph</td>
+          <td class="p-4 align-middle text-muted-foreground">UI-layer only</td>
+          <td class="p-4 align-middle text-muted-foreground">Implicit (Snapshot)</td>
+        </tr>
+        <tr class="transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">ReactiveState-Kotlin</td>
+          <td class="p-4 align-middle text-muted-foreground">Pull + Graph</td>
+          <td class="p-4 align-middle text-muted-foreground">All layers + KMP</td>
+          <td class="p-4 align-middle text-muted-foreground">Implicit (auto)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</DocsLayout>
