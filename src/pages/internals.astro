@@ -1,0 +1,375 @@
+---
+import DocsLayout from '../layouts/DocsLayout.astro';
+import { Code } from 'astro:components';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const twoKindsCode = `// Everything is one of these two:
+
+// 1. Stored — holds a concrete value
+let a = Node(stored: 1)
+let b = Node(stored: 2)
+
+// 2. Computed — derives from others
+let c = Node(rule: { a.value + b.value })`;
+
+const excelCode = `// An app's entire state can be modeled as a spreadsheet:
+//
+//   A1: 100        ← stored (user input)
+//   A2: 200        ← stored (API response)
+//   A3: =A1+A2     ← computed (derived)
+//   A4: =A3*0.1    ← computed (derived from derived)
+//
+// Excel already solved this in the 1980s.
+// The question is: how does the engine know
+// that changing A1 should update A3 and A4?`;
+
+const captureNaiveCode = `// Without automatic capture, you must wire dependencies manually:
+
+let a = Store(value: 1)
+let b = Store(value: 2)
+
+// Manually register: "c depends on a and b"
+a.subscribers.append(c)
+b.subscribers.append(c)
+
+// For every new dependency, you add another line.
+// For conditional dependencies, you manage subscribe/unsubscribe yourself.
+// This is exactly what RxSwift/Combine's combineLatest does.`;
+
+const captureAutoCode = `// With automatic capture (ambient pattern):
+
+let a = Node(stored: 1)
+let b = Node(stored: 2)
+
+// Just write the computation. Dependencies are discovered at runtime.
+let c = Node(rule: { a.value + b.value })
+
+// No manual wiring. No subscribe calls.
+// When c.value is first accessed, the system discovers
+// that c depends on a and b — automatically.`;
+
+const captureStackCode = `// How the stack-based capture works internally:
+
+// 1. Someone accesses c.wrappedValue
+// 2. System sets currentNode = c
+// 3. The rule closure executes: { a.value + b.value }
+// 4. Inside a.value getter:
+//    - checks currentNode → it's c
+//    - creates edge: a → c (outgoing)
+//    - creates edge: c ← a (incoming)
+//    - returns the stored value
+// 5. Same happens for b.value
+// 6. The closure completes, returns a + b
+// 7. System restores currentNode to previous (nil)
+//
+// Result: edges a→c and b→c now exist in the graph.`;
+
+const captureNestedCode = `// Nested computed values use a stack:
+
+let a = Node(stored: 1)
+let b = Node(stored: 2)
+let c = Node(rule: { a.value + b.value })  // depends on a, b
+let e = Node(rule: { c.value * 10 })       // depends on c
+
+// When e.wrappedValue is accessed:
+//
+// Stack: [nil]
+// → push e → Stack: [e]
+//   → e's rule calls c.value
+//   → push c → Stack: [e, c]
+//     → c's rule calls a.value → edge a→c created
+//     → c's rule calls b.value → edge b→c created
+//   → pop c → Stack: [e]
+//   → edge c→e created
+// → pop e → Stack: [nil]
+//
+// The stack ensures nested computeds work correctly.`;
+
+const conditionalCode = `// Dependencies can change based on runtime conditions:
+
+let useAlternate = Node(stored: false)
+let a = Node(stored: 1)
+let b = Node(stored: 2)
+let d = Node(stored: 99)
+
+let c = Node(rule: {
+  if useAlternate.value {
+    return d.value          // depends on: useAlternate, d
+  } else {
+    return a.value + b.value // depends on: useAlternate, a, b
+  }
+})
+
+// First access: useAlternate is false
+//   → dependencies: {useAlternate, a, b}
+//   → d is NOT a dependency (never accessed)
+//
+// If useAlternate becomes true, c is recomputed:
+//   → OLD dependencies cleared
+//   → NEW dependencies: {useAlternate, d}
+//   → a and b are no longer dependencies
+//
+// This is why dependencies are rebuilt on every evaluation.`;
+
+const swiftuiBodyCode = `struct MyView: View {
+  @State var count = 0
+  @State var name = ""
+
+  var body: some View {
+    // This closure IS a computed node.
+    // Only what you ACCESS becomes a dependency.
+
+    Text("Count: \\(count)")
+    // → body depends on count
+    // → body does NOT depend on name
+    // → changing name will NOT re-evaluate body
+  }
+}
+
+// If the code were:
+//   if showName {
+//     Text(name)    // name accessed → dependency
+//   } else {
+//     Text("\\(count)")  // only count accessed
+//   }
+// → dependencies change based on which branch executes`;
+
+const dirtyFlagCode = `// When a stored value changes:
+
+a.value = 10  // a changed!
+
+// Push approach (RxSwift/Combine):
+//   → immediately recompute c = a + b = 10 + 2 = 12
+//   → immediately push 12 to all of c's subscribers
+//   → immediately recompute e = c * 10 = 120
+//   → ...cascade continues synchronously
+
+// Pull approach (AttributedGraph / swift-state-graph):
+//   → mark c as "potentially dirty"
+//   → mark e as "potentially dirty"
+//   → STOP. No computation happens.
+//   →
+//   → ...later, when someone accesses e.value:
+//   →   check: is e dirty? yes
+//   →   check: is c dirty? yes
+//   →   recompute c = 10 + 2 = 12
+//   →   recompute e = 12 * 10 = 120
+//   →   clear dirty flags`;
+
+const setNeedsLayoutCode = `// UIKit's setNeedsLayout is the SAME pattern:
+
+view.setNeedsLayout()   // = "mark as dirty"
+// ...nothing happens yet...
+// ...more mutations can accumulate...
+view.layoutIfNeeded()   // = "recompute if dirty"
+
+// Why are they TWO separate methods?
+// Because batching.
+//
+// frame = newFrame      → setNeedsLayout()
+// text = newText        → setNeedsLayout()
+// color = newColor      → setNeedsLayout()
+//
+// Event loop tick → layoutIfNeeded() called once
+// → single layout pass for all three changes
+//
+// If layout happened immediately on every mutation,
+// you'd get 3 layout passes instead of 1.`;
+---
+
+<DocsLayout title="How Dependency Capture Works" currentPath={`${base}/internals/`}>
+  <h1>How Dependency Capture Works</h1>
+  <p class="text-lg text-muted-foreground !mt-2">
+    The internal mechanics that make graph-based state management possible.
+  </p>
+
+  <hr />
+
+  <h2>The Excel Insight</h2>
+
+  <p>The best mental model for graph-based state management is something that has existed since the 1980s: <strong>a spreadsheet</strong>.</p>
+
+  <p>An Excel spreadsheet is a massive grid of cells. Each cell is either a <strong>stored value</strong> (you type a number) or a <strong>computed value</strong> (a formula like <code>=A1+B1</code>). When you change a stored cell, every formula that depends on it automatically updates. The spreadsheet engine knows the dependency graph and recomputes only what's needed.</p>
+
+  <Code code={excelCode} lang="swift" />
+
+  <p>This is exactly what graph-based state management does. An application's entire state — no matter how complex — can be modeled as stored values and computed values with dependencies between them. The engine that powers Excel's cell updates is, in essence, the same engine that powers SwiftUI's view updates, Jotai's atom graph, and swift-state-graph's node system.</p>
+
+  <p>The algorithms behind this aren't new. SwiftUI's AttributedGraph is based on academic papers from the 1970s and 1980s. Nothing in this space is truly novel — it's established computer science being applied to UI frameworks.</p>
+
+  <hr />
+
+  <h2>Only Two Primitives Exist</h2>
+
+  <p>At the most fundamental level, every value in a state management system is one of exactly <strong>two things</strong>:</p>
+
+  <ol>
+    <li><strong>Stored</strong> — holds a concrete value directly (user input, API response, initial state)</li>
+    <li><strong>Computed</strong> — derives its value from other nodes (always read-only, always dependent)</li>
+  </ol>
+
+  <Code code={twoKindsCode} lang="swift" />
+
+  <p>This maps directly to every library covered in this report:</p>
+
+  <div class="not-prose my-6 w-full overflow-auto rounded-lg border border-border bg-card">
+    <table class="w-full min-w-[500px] caption-bottom text-sm">
+      <thead class="[&_tr]:border-b">
+        <tr class="border-b transition-colors">
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Library</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Stored</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Computed</th>
+        </tr>
+      </thead>
+      <tbody class="[&_tr:last-child]:border-0">
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Excel</td>
+          <td class="p-4 align-middle text-muted-foreground">Cell with a value</td>
+          <td class="p-4 align-middle text-muted-foreground">Cell with a formula</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">swift-state-graph</td>
+          <td class="p-4 align-middle text-muted-foreground">@GraphStored</td>
+          <td class="p-4 align-middle text-muted-foreground">@GraphComputed</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Jotai</td>
+          <td class="p-4 align-middle text-muted-foreground">atom(value)</td>
+          <td class="p-4 align-middle text-muted-foreground">atom(get =&gt; ...)</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Atoms</td>
+          <td class="p-4 align-middle text-muted-foreground">StateAtom</td>
+          <td class="p-4 align-middle text-muted-foreground">ValueAtom</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Riverpod</td>
+          <td class="p-4 align-middle text-muted-foreground">NotifierProvider</td>
+          <td class="p-4 align-middle text-muted-foreground">Provider</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">SwiftUI</td>
+          <td class="p-4 align-middle text-muted-foreground">@State</td>
+          <td class="p-4 align-middle text-muted-foreground">body (View)</td>
+        </tr>
+        <tr class="transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">TanStack Store</td>
+          <td class="p-4 align-middle text-muted-foreground">Store</td>
+          <td class="p-4 align-middle text-muted-foreground">Derived</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>There are no other kinds. Every piece of state is either stored or computed. Understanding this reduces the entire domain to a single question: <strong>how are the dependencies between computed and stored nodes managed?</strong></p>
+
+  <hr />
+
+  <h2>Manual vs Automatic Capture</h2>
+
+  <p>The traditional approach — RxSwift's <code>combineLatest</code>, Kotlin's <code>combine</code>, Zustand's selectors — requires the developer to <strong>manually wire</strong> each dependency:</p>
+
+  <Code code={captureNaiveCode} lang="swift" />
+
+  <p>The breakthrough of graph-based systems is <strong>automatic capture</strong>: you write the computation, and the system discovers the dependencies for you:</p>
+
+  <Code code={captureAutoCode} lang="swift" />
+
+  <p>But how does this actually work? The closure <code>{`{ a.value + b.value }`}</code> is just code — the system can't statically analyze it to know which nodes are accessed. The answer lies in the <strong>ambient pattern</strong>.</p>
+
+  <hr />
+
+  <h2>The Ambient Pattern (How Capture Actually Works)</h2>
+
+  <p>The key insight: the closure is an <strong>escaping closure</strong>. It is not executed when it's defined — it's executed later, when someone accesses the computed node's value. At execution time, the system can track which nodes are read.</p>
+
+  <p>The mechanism uses a thread-local (or context-local) variable — often called <code>currentNode</code> — to track who is currently being evaluated:</p>
+
+  <Code code={captureStackCode} lang="swift" />
+
+  <p>This is the technique that makes Jotai's <code>get()</code>, Atoms' <code>context.watch()</code>, Riverpod's <code>ref.watch()</code>, and swift-state-graph's property access all work. The specific API differs, but the underlying mechanism is the same: <strong>set a context before executing the closure, observe accesses during execution, build edges from those accesses</strong>.</p>
+
+  <h3>Nested Computed Values (Stack Behavior)</h3>
+
+  <p>When a computed node depends on another computed node, the system uses a <strong>stack</strong> to track the nesting:</p>
+
+  <Code code={captureNestedCode} lang="swift" />
+
+  <p>The stack ensures that each node's dependencies are attributed to the correct node, even when computations are deeply nested.</p>
+
+  <hr />
+
+  <h2>Conditional / Dynamic Dependencies</h2>
+
+  <p>Because dependencies are discovered at <strong>runtime</strong> (not statically), they can change based on conditions:</p>
+
+  <Code code={conditionalCode} lang="swift" />
+
+  <p>This is a capability that manual wiring systems (RxSwift, Combine, StateFlow) struggle with. With <code>combineLatest(a, b, d)</code>, you'd subscribe to all three regardless of which branch executes. With automatic capture, you only depend on what you actually read.</p>
+
+  <p>Each time the computed node is re-evaluated, <strong>all previous dependencies are cleared and rebuilt from scratch</strong>. This ensures the dependency graph always reflects the current reality.</p>
+
+  <hr />
+
+  <h2>SwiftUI's body Is a Computed Node</h2>
+
+  <p>SwiftUI's view <code>body</code> is, at its core, exactly the same as a computed node in a dependency graph:</p>
+
+  <Code code={swiftuiBodyCode} lang="swift" />
+
+  <p>This is why SwiftUI can achieve fine-grained updates without the developer explicitly subscribing to anything. The <code>body</code> closure is an escaping closure — it's only executed when the view needs to render. During execution, the system (AttributedGraph) tracks which <code>@State</code> / <code>@Observable</code> properties are accessed, building the dependency edges automatically.</p>
+
+  <p>If a property is never accessed in the current execution path, the view has no dependency on it, and changes to that property will <strong>not</strong> trigger a re-evaluation of <code>body</code>.</p>
+
+  <p>This is not SwiftUI-specific magic. It's the same ambient capture pattern used by Jotai, swift-state-graph, and every other graph-based system. SwiftUI just happens to be the most widely-used implementation of it.</p>
+
+  <hr />
+
+  <h2>Lazy Invalidation (Dirty Flags, Not Eager Recomputation)</h2>
+
+  <p>When a stored value changes, what happens to its dependents? This is where push and pull diverge most clearly:</p>
+
+  <Code code={dirtyFlagCode} lang="swift" />
+
+  <p>The pull/lazy approach has a critical advantage: <strong>multiple source changes are naturally batched</strong>. If <code>a</code>, <code>b</code>, and <code>d</code> all change before anyone reads a computed value, only one recomputation happens — with all three new values already in place. No intermediate states. No glitching.</p>
+
+  <h3>The setNeedsLayout Analogy</h3>
+
+  <p>UIKit developers already know this pattern intimately:</p>
+
+  <Code code={setNeedsLayoutCode} lang="swift" />
+
+  <p>The two-method pattern (<code>setNeedsLayout</code> + <code>layoutIfNeeded</code>) exists precisely to separate <strong>invalidation</strong> from <strong>recomputation</strong>. Graph-based state management does the same thing: mark dirty, then recompute on access.</p>
+
+  <p>This is also why SwiftUI doesn't immediately re-render a view when <code>@State</code> changes. It marks the view's body as "potentially dirty" and batches the re-evaluation into the next render pass — exactly like <code>setNeedsLayout</code>.</p>
+
+  <hr />
+
+  <h2>Mental Models: Waterfall vs Bird's-Eye View</h2>
+
+  <p>A useful way to visualize the difference between push and pull:</p>
+
+  <p><strong>Push (RxSwift / Combine / StateFlow)</strong> is like a <strong>waterfall</strong>. Values flow downward from upstream to downstream. When the source emits, the value cascades through the stream. You stand at the bottom and receive whatever falls. If the waterfall is too fast, you get overwhelmed (backpressure).</p>
+
+  <p><strong>Pull (AttributedGraph / Jotai / swift-state-graph)</strong> is like a <strong>bird's-eye view</strong>. You look down at the graph from above. You can see that something changed — a node is marked dirty — but you don't know the new value yet. You only compute it when you need it. Multiple changes can accumulate, and when you finally look, you see the latest state of everything at once.</p>
+
+  <p>Both can express the same data flow patterns (A + B = C). The difference is <strong>who drives the computation</strong>: the producer (push) or the consumer (pull).</p>
+
+  <hr />
+
+  <h2>Why This Matters</h2>
+
+  <p>Understanding the internals — the ambient pattern, stack-based capture, lazy invalidation — reveals that graph-based state management is not a new invention. It's the application of well-established computer science (DAGs, topological sorting, lazy evaluation) to the problem of UI state management.</p>
+
+  <p>The same fundamental algorithms appear in:</p>
+  <ul>
+    <li><strong>Spreadsheets</strong> (Excel, Google Sheets) — the original reactive cell engine</li>
+    <li><strong>Build systems</strong> (Make, Bazel) — dependency-driven recomputation</li>
+    <li><strong>Package managers</strong> (SPM, npm) — dependency resolution as a DAG</li>
+    <li><strong>Garbage collectors</strong> — reference graph traversal</li>
+    <li><strong>UI layout engines</strong> (Auto Layout, UIKit's layout system) — constraint-based dependency solving</li>
+  </ul>
+
+  <p>Once you see the pattern, you see it everywhere. The question for any state management library is simply: <strong>does it make the developer manage the graph manually, or does the runtime handle it?</strong></p>
+</DocsLayout>
