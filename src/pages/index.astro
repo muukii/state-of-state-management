@@ -3,13 +3,14 @@ import DocsLayout from '../layouts/DocsLayout.astro';
 import Badge from '../components/ui/Badge.astro';
 import Mermaid from '../components/Mermaid.astro';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { lastUpdatedLabel } from '../lib/build-info';
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 
 <DocsLayout title="Introduction" currentPath={`${base}/`}>
   <Badge variant="outline" class="not-prose text-muted-foreground mb-4">
-    Last updated Apr 2026
+    {lastUpdatedLabel}
   </Badge>
   <h1>State of State Management</h1>
   <p class="text-lg text-muted-foreground !mt-2">
@@ -18,53 +19,58 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
   <hr />
 
-  <h2>Two Independent Axes</h2>
+  <h2>Primary Split</h2>
 
-  <p>This report organizes the state management landscape along two independent axes:</p>
+  <p>This report organizes the state management landscape by its primary design unit:</p>
 
   <ol>
-    <li><strong><a href={`${base}/push-vs-pull/`}>Push vs Pull</a></strong> — how state changes flow to consumers</li>
-    <li><strong>Graph-based dependency tracking</strong> — a technique for managing derived state, applicable to either push or pull systems</li>
+    <li><strong><a href={`${base}/store-vs-atomic/`}>Store-centric</a></strong> — state is organized around feature stores, reducers, ViewModels, or BLoCs</li>
+    <li><strong>Atomic / Graph-centric</strong> — state is organized as composable atoms, providers, signals, or graph nodes</li>
   </ol>
 
-  <p>Push and Pull describe the <strong>direction of data flow</strong>. Graph describes <strong>how derived state dependencies are managed</strong> — and it can appear in both push and pull architectures.</p>
+  <p>Push and pull still matter, but they are a lower-level evaluation detail. The more useful first question is <strong>where the state model lives</strong>: in a store boundary, or in a graph of small derived nodes.</p>
 
   <div class="not-prose mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
     <Card className="gap-0 rounded-lg border border-border py-0 shadow-none ring-0">
       <CardHeader className="p-6">
         <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Push-based
+          Store-centric
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 pt-0">
         <Mermaid chart={`
 graph TD
-  Store["🔄 Store"]
-  Store -->|notify| SubA["Sub A"]
-  Store -->|notify| SubB["Sub B"]
-  Store -->|notify| SubC["Sub C"]
-  SubA -->|"selector ✓"| RenderA["re-render"]
-  SubB -->|"selector ✗"| Skip["skip"]
-  SubC -->|"selector ✓"| RenderC["re-render"]
+  Action["action / event"]
+  Store["Store / Reducer"]
+  State["Feature State"]
+  Selector["selector / computed"]
+  View["View"]
+  Action --> Store
+  Store --> State
+  State --> Selector
+  Selector --> View
 `} />
       </CardContent>
     </Card>
     <Card className="gap-0 rounded-lg border border-border py-0 shadow-none ring-0">
       <CardHeader className="p-6">
         <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Pull-based
+          Atomic / Graph-centric
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 pt-0">
         <Mermaid chart={`
 graph TD
-  Count["count ●"]
-  User["user"]
-  Count --> Doubled["doubled"]
-  Count --> Filtered["filtered"]
-  User -.-> Greeting["greeting"]
-  Doubled --> RenderA["re-render"]
-  Filtered --> RenderB["re-render"]
+  Count["count atom"]
+  User["user provider"]
+  Doubled["doubled derived"]
+  Greeting["greeting derived"]
+  ViewA["View A"]
+  ViewB["View B"]
+  Count --> Doubled
+  User --> Greeting
+  Doubled --> ViewA
+  Greeting --> ViewB
 `} />
       </CardContent>
     </Card>
@@ -72,30 +78,30 @@ graph TD
 
   <hr />
 
-  <h2>Graph-based Dependency Tracking</h2>
+  <h2>Derived State Tracking</h2>
 
-  <p><strong>Every state management system needs derived state.</strong> Whether push or pull, applications inevitably need to compute values from other values — filtered lists, aggregated counts, combined UI states.</p>
+  <p><strong>Every state management system needs derived state.</strong> Whether state is store-centric or atomic, applications inevitably need to compute values from other values — filtered lists, aggregated counts, combined UI states.</p>
 
   <p>The question is: <strong>how are the dependencies between source and derived state managed?</strong></p>
 
   <h3>1. Automatic / Implicit</h3>
   <p>The act of "reading" a state node automatically registers a dependency.</p>
-  <ul>
-    <li><strong>Jotai</strong>: <code>atom(get =&gt; get(otherAtom))</code></li>
-    <li><strong>Atoms</strong>: <code>context.watch(OtherAtom())</code> (push propagation)</li>
-    <li><strong>Riverpod</strong>: <code>ref.watch(provider)</code> (push propagation)</li>
-    <li><strong>swift-state-graph</strong>: ThreadLocal access observation</li>
-    <li><strong>Jetpack Compose</strong>: Snapshot system in <code>derivedStateOf {"{}"}</code></li>
-  </ul>
+	<ul>
+	    <li><strong>Jotai</strong>: <code>atom(get =&gt; get(otherAtom))</code></li>
+	    <li><strong>Atoms</strong>: <code>context.watch(OtherAtom())</code></li>
+	    <li><strong>Riverpod</strong>: <code>ref.watch(provider)</code> (provider rebuild + value filtering)</li>
+	    <li><strong>swift-state-graph</strong>: ThreadLocal access observation</li>
+	    <li><strong>Jetpack Compose</strong>: Snapshot system in <code>derivedStateOf {"{}"}</code></li>
+	    <li><strong>TanStack Store</strong>: <code>createStore(() =&gt; otherStore.state * 2)</code></li>
+	  </ul>
 
-  <h3>2. Explicit / Declarative</h3>
-  <p>The developer declares dependencies via a <code>deps</code> array or pipeline.</p>
-  <ul>
-    <li><strong>TanStack Store</strong>: <code>new Derived({"{ deps: [storeA, storeB], fn: ... }"})</code></li>
-    <li><strong>Verge</strong>: <code>store.derived(.select(\.count))</code></li>
-  </ul>
+	  <h3>2. Explicit / Declarative</h3>
+	  <p>The developer declares dependencies via a pipeline or composition API.</p>
+	  <ul>
+	    <li><strong>Verge</strong>: <code>store.derived(.select(\.count))</code></li>
+	  </ul>
 
-  <h3>3. No Graph (Manual)</h3>
+  <h3>3. Store-local / Manual</h3>
   <p>No dependency graph. The developer wires everything by hand.</p>
   <ul>
     <li><strong>Zustand</strong>: Selectors with <code>Object.is</code> equality</li>
@@ -112,30 +118,30 @@ graph TD
       <thead class="[&_tr]:border-b">
         <tr class="border-b transition-colors">
           <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Platform</th>
-          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Push-based (Mainstream)</th>
-          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Pull-based / Graph (Emerging)</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Store-centric</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Atomic / Graph-centric</th>
         </tr>
       </thead>
       <tbody class="[&_tr:last-child]:border-0">
         <tr class="border-b transition-colors hover:bg-muted/50">
           <td class="p-4 align-middle font-medium text-foreground"><a href={`${base}/web/`} class="underline underline-offset-4">Web</a></td>
           <td class="p-4 align-middle text-muted-foreground">Redux, Zustand</td>
-          <td class="p-4 align-middle text-muted-foreground">Jotai, Signals, TanStack Store (push+graph)</td>
+	          <td class="p-4 align-middle text-muted-foreground">Jotai, Signals, TanStack Store</td>
         </tr>
         <tr class="border-b transition-colors hover:bg-muted/50">
           <td class="p-4 align-middle font-medium text-foreground"><a href={`${base}/ios/`} class="underline underline-offset-4">iOS</a></td>
           <td class="p-4 align-middle text-muted-foreground">Verge, TCA</td>
-          <td class="p-4 align-middle text-muted-foreground">Atoms (push+graph), swift-state-graph</td>
+          <td class="p-4 align-middle text-muted-foreground">Atoms, swift-state-graph</td>
         </tr>
         <tr class="border-b transition-colors hover:bg-muted/50">
           <td class="p-4 align-middle font-medium text-foreground"><a href={`${base}/android/`} class="underline underline-offset-4">Android</a></td>
           <td class="p-4 align-middle text-muted-foreground">ViewModel + StateFlow</td>
-          <td class="p-4 align-middle text-muted-foreground">Compose derivedStateOf (UI layer only)</td>
+	          <td class="p-4 align-middle text-muted-foreground">Compose derivedStateOf, ReactiveState-Kotlin</td>
         </tr>
         <tr class="transition-colors hover:bg-muted/50">
           <td class="p-4 align-middle font-medium text-foreground"><a href={`${base}/flutter/`} class="underline underline-offset-4">Flutter</a></td>
           <td class="p-4 align-middle text-muted-foreground">Provider, Bloc</td>
-          <td class="p-4 align-middle text-muted-foreground">Riverpod (push+graph)</td>
+	          <td class="p-4 align-middle text-muted-foreground">Riverpod (provider graph)</td>
         </tr>
       </tbody>
     </table>

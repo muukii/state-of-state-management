@@ -3,20 +3,20 @@ title: "Library Deep Dives"
 order: 4
 ---
 
-## Push-based Libraries
+## Store-centric Libraries
 
 ---
 
-### Verge — Push with Tracking and Derived
+### Verge — Store with Tracking and Derived
 
 - **Repository**: [github.com/VergeGroup/swift-verge](https://github.com/VergeGroup/swift-verge)
 - **Language**: Swift
 - **Framework**: SwiftUI, UIKit
-- **Paradigm**: Push-based, unidirectional data flow (Flux-inspired)
+- **Pattern**: Store-centric, unidirectional data flow (Flux-inspired)
 
 #### Architecture
 
-Verge is a push-based state management framework built on unidirectional data flow. The `Store` holds the single source of truth, and mutations flow through `commit` blocks.
+Verge is a store-centric state management framework built on unidirectional data flow. The `Store` holds the single source of truth, and mutations flow through `commit` blocks.
 
 ```
 Action → store.commit { ... } → State mutation → Changes<State> → Subscriber notification
@@ -29,7 +29,7 @@ Action → store.commit { ... } → State mutation → Changes<State> → Subscr
 3. `Changes<State>` object is created, containing old and new state plus modification info
 4. `EventEmitter` pushes the change to all subscribers
 
-This is fundamentally push-driven — state changes are immediately broadcast to all subscribers.
+This is fundamentally store-driven — state changes are centralized and then emitted to subscribers.
 
 #### Derived State
 
@@ -47,23 +47,23 @@ Store → Derived<Value>
 
 #### @Tracking Macro
 
-The `@Tracking` macro generates property-access tracking infrastructure on state structs. Combined with `ifChanged()`, UI components can check whether specific properties have changed — enabling fine-grained update filtering within a push architecture.
+The `@Tracking` macro generates property-access tracking infrastructure on state structs. Combined with `ifChanged()`, UI components can check whether specific properties have changed — enabling fine-grained update filtering within a store-centric architecture.
 
 #### Strengths
 
 - Simple mental model: commit-based mutation without action/reducer ceremony
-- `@Tracking` + `ifChanged()` enables fine-grained filtering within push
+- `@Tracking` + `ifChanged()` enables fine-grained filtering within a store
 - Middleware support for interception, validation, logging
 - Thread-safe via `swift-atomics` and `TaskManagerActor`
 
 ---
 
-### TCA (The Composable Architecture) — Push with Reducer Composition
+### TCA (The Composable Architecture) — Store with Reducer Composition
 
 - **Repository**: [github.com/pointfreeco/swift-composable-architecture](https://github.com/pointfreeco/swift-composable-architecture)
 - **Language**: Swift
 - **Framework**: SwiftUI
-- **Paradigm**: Push-based, unidirectional (Elm-inspired)
+- **Pattern**: Store-centric, unidirectional (Elm-inspired)
 
 #### Architecture
 
@@ -117,16 +117,16 @@ Reduce { state, action in ... }
 
 ---
 
-### Atoms (swiftui-atom-properties) — Push with Implicit Graph
+### Atoms (swiftui-atom-properties) — Hybrid with Implicit Graph
 
 - **Repository**: [github.com/ra1028/swiftui-atom-properties](https://github.com/ra1028/swiftui-atom-properties)
 - **Language**: Swift
 - **Framework**: SwiftUI
-- **Paradigm**: Push-based with automatic dependency graph (Recoil/Jotai-inspired)
+- **Pattern**: Automatic dependency graph with downstream propagation (Recoil/Jotai-inspired)
 
 #### Architecture
 
-Atoms is a Recoil/Jotai-inspired atomic state management library for SwiftUI. Like Jotai, the basic unit is an "atom" — a small, composable piece of state. However, unlike Jotai's pull/lazy model, Atoms uses **push-based propagation**: when a source atom changes, all dependent atoms are eagerly recomputed in topological order.
+Atoms is a Recoil/Jotai-inspired atomic state management library for SwiftUI. Like Jotai, the basic unit is an "atom" — a small, composable piece of state. Unlike a purely lazy pull graph, Atoms captures dependencies via `context.watch()` and propagates changes through the watched atom graph while keeping values cached while in use.
 
 The system provides `AtomRoot` for the global context, `AtomScope` for scoped overrides, and property wrappers (`@Watch`, `@WatchState`) for SwiftUI integration.
 
@@ -134,7 +134,7 @@ The system provides `AtomRoot` for the global context, `AtomScope` for scoped ov
 
 **Automatic and implicit** — the same approach as Jotai. When an atom accesses another atom via `context.watch()` inside its `value` method, a dependency is automatically registered. The `AtomStore` maintains a bidirectional graph (`dependencies` and `children` maps).
 
-The key difference from Jotai/swift-state-graph: the `StoreContext` calculates a **topological sort** of affected nodes and **eagerly pushes** updates downstream, rather than lazily invalidating.
+The key difference from swift-state-graph: Atoms propagates through the atom graph for watched values, rather than modeling every computed value as a purely lazy dirty node.
 
 #### Core Atom Types
 
@@ -168,9 +168,9 @@ struct CounterView: View {
 }
 ```
 
-#### What Makes It Unique: Push + Implicit Graph
+#### What Makes It Unique: Implicit Graph with Downstream Propagation
 
-Most libraries with implicit dependency tracking (Jotai, swift-state-graph) use pull/lazy evaluation. Atoms takes the opposite approach: **implicit tracking for graph construction, but push/eager propagation for updates**. The topological sort ensures correct ordering and avoids glitching.
+Many libraries with implicit dependency tracking lean pull/lazy at the read API. Atoms takes a different shape: **implicit tracking for graph construction, with downstream propagation for watched atom updates**. This makes it a hybrid rather than a purely push or purely pull system.
 
 #### Strengths
 
@@ -181,12 +181,12 @@ Most libraries with implicit dependency tracking (Jotai, swift-state-graph) use 
 
 ---
 
-### Zustand — Push, Minimal
+### Zustand — Store-centric, Minimal
 
 - **Repository**: [github.com/pmndrs/zustand](https://github.com/pmndrs/zustand)
 - **Language**: TypeScript
 - **Framework**: React (Vanilla Core is framework-agnostic)
-- **Paradigm**: Push-based (simple subscription)
+- **Pattern**: Store-centric (simple subscription)
 
 #### Architecture
 
@@ -215,7 +215,7 @@ const doubled = useStore((state) => state.bears * 2)
 
 #### Strengths
 
-- ~2KB bundle, extremely lightweight
+- Tiny store API, extremely lightweight
 - Low learning curve, simple and predictable
 - No Provider needed (singleton stores)
 - Extensible via middleware (persist, devtools, immer)
@@ -227,61 +227,56 @@ const doubled = useStore((state) => state.bears * 2)
 
 ---
 
-### TanStack Store — Push with Explicit Graph
+### TanStack Store — Signals-style Store Graph
 
 - **Repository**: [github.com/TanStack/store](https://github.com/TanStack/store)
 - **Language**: TypeScript
 - **Framework**: React, Vue, Solid, Angular, Svelte
-- **Paradigm**: Push-based with graph-tracked derived state
+- **Pattern**: Signals-style graph with derived stores
 
 #### Architecture
 
-Three core primitives:
+Core primitives:
 
 1. **Store**: Mutable state container with `setState()`
-2. **Derived**: Lazily evaluated computed values with explicit dependency declaration
-3. **Effect**: Side-effect management with dependency tracking and cleanup
+2. **Derived store**: A store created from a function that reads other stores
+3. **Subscriptions and batching**: Observers can subscribe to stores, and `batch()` groups writes
 
 #### Dependency Tracking
 
-Maintains a **bidirectional dependency map**:
-
-- `__storeToDerived`: Store → Derived
-- `__derivedToStore`: Derived → Store
-
-Dependencies are registered via **explicit `deps` array** — not implicit auto-tracking.
+Dependencies are discovered when a derived store reads another store's `.state` during computation. This is closer to a signals runtime than to a manual `deps` array.
 
 #### Derived State
 
 ```typescript
-const countStore = new Store(0)
+const countStore = createStore(0)
 
-const doubled = new Derived({
-  deps: [countStore],       // ← Explicit declaration
-  fn: () => countStore.state * 2,
-})
+const doubled = createStore(() => countStore.state * 2)
+
+countStore.setState(() => 5)
+console.log(doubled.state) // 10
 ```
 
-The `batch()` function aggregates updates; the internal `__flush()` traverses the dependency graph for efficient propagation.
+The `batch()` function aggregates writes so subscribers observe the final state instead of each intermediate mutation.
 
 #### Strengths
 
-- Dependencies visible at a glance in `deps`
 - Framework-agnostic (foundation of TanStack ecosystem)
-- Effects as a dedicated, first-class concept
+- Signals-style derived stores
+- Batch support for grouped writes
 
 ---
 
-## Pull-based Libraries
+## Atomic / Graph-centric Libraries
 
 ---
 
-### Jotai — Pull with Implicit Graph
+### Jotai — Atom Graph
 
 - **Repository**: [github.com/pmndrs/jotai](https://github.com/pmndrs/jotai)
 - **Language**: TypeScript
 - **Framework**: React
-- **Paradigm**: Pull-based, automatic graph
+- **Pattern**: Atomic graph, automatic dependency tracking
 
 #### Architecture
 
@@ -312,7 +307,7 @@ const decrementAtom = atom(
 
 #### Relationship with Recoil
 
-Shares the same atom-based philosophy as Meta's Recoil (2020), but achieves equivalent functionality with a simpler API. Recoil's maintenance has stagnated; Jotai is the de facto standard in this space.
+Shares the same atom-based philosophy as Meta's Recoil (2020), but achieves similar functionality with a simpler API. Recoil's maintenance has stagnated; Jotai has become a common successor in this space.
 
 #### Strengths
 
@@ -322,13 +317,13 @@ Shares the same atom-based philosophy as Meta's Recoil (2020), but achieves equi
 
 ---
 
-### swift-state-graph — Pull with Implicit Graph (Jotai for iOS)
+### swift-state-graph — DAG with Implicit Tracking
 
 - **Repository**: [github.com/VergeGroup/swift-state-graph](https://github.com/VergeGroup/swift-state-graph)
 - **Language**: Swift 6.0+
 - **Framework**: SwiftUI, UIKit
 - **Requirements**: iOS 17+
-- **Paradigm**: Pull-based, automatic graph
+- **Pattern**: DAG-based graph, automatic dependency tracking
 
 #### Architecture
 
@@ -394,11 +389,11 @@ Each node holds an `OSAllocatedUnfairLock` for atomic operations. Maintains acto
 
 ---
 
-### Android — Push Mainstream, Graph Emerging in UI Layer
+### Android — Store-centric Mainstream, Graph Emerging Around Compose
 
-#### ViewModel + StateFlow (Push, Manual Wiring)
+#### ViewModel + StateFlow (Store-centric, Manual Wiring)
 
-The industry standard on Android. Push-based with manual `combine` wiring for derived state.
+The standard Android baseline. Store-centric with manual `combine` wiring for derived state.
 
 ```kotlin
 val isLoading: StateFlow<Boolean>
@@ -410,9 +405,9 @@ val uiState = combine(isLoading, user, posts) { loading, user, posts ->
 }
 ```
 
-#### Jetpack Compose `derivedStateOf` (Pull + Graph in UI Layer)
+#### Jetpack Compose `derivedStateOf` (Compose-runtime Graph)
 
-Compose achieves pull-based graph tracking **within the UI layer**:
+Compose achieves graph-aware derived state around Compose state reads:
 
 ```kotlin
 val list = remember { mutableStateListOf<Item>() }
@@ -425,9 +420,9 @@ val count by remember {
 - Derived states reading other derived states form a DAG
 - Conditional invalidation: suppresses recomposition if the result hasn't changed
 
-This is **UI-layer only** — not available in the business logic layer.
+This is **Compose-runtime scoped**. In typical Android architecture, ViewModels and repositories still use `StateFlow.combine()` or another StateFlow-based abstraction.
 
-#### ReactiveState-Kotlin (Pull + Graph for Business Logic)
+#### ReactiveState-Kotlin (StateFlow Graph for Business Logic)
 
 ```kotlin
 val base = MutableStateFlow(0)

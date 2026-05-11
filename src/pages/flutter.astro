@@ -114,13 +114,13 @@ BlocBuilder<CounterBloc, int>(
   <p>The Flutter state management landscape has evolved through several phases:</p>
 
   <ol>
-    <li><strong>Provider (2019):</strong> A wrapper around <code>InheritedWidget</code>, recommended by the Flutter team. Push-based with <code>ChangeNotifier</code>.</li>
+    <li><strong>Provider (2019):</strong> A popular wrapper around <code>InheritedWidget</code>. Commonly paired with <code>ChangeNotifier</code> for push-style updates.</li>
     <li><strong>BLoC (2018):</strong> Event-driven, stream-based pattern. Popular in enterprise Flutter apps.</li>
     <li><strong>GetX (2020):</strong> All-in-one solution with reactive state, routing, and DI. Controversial for mixing concerns.</li>
-    <li><strong>Riverpod (2020):</strong> Created by the same author as Provider (Remi Rousselet), Riverpod fixes Provider's limitations with compile-safe, graph-based state management.</li>
+    <li><strong>Riverpod (2020):</strong> Created by the same author as Provider (Remi Rousselet), Riverpod removes <code>BuildContext</code> coupling and adds scoped, graph-like provider composition.</li>
   </ol>
 
-  <p>Among these, <strong>Riverpod stands out as the most graph-like approach</strong> &mdash; it builds an implicit dependency graph via <code>ref.watch()</code> with push-based propagation, making it architecturally similar to Atoms (swiftui-atom-properties) in the iOS ecosystem.</p>
+  <p>Among these, <strong>Riverpod stands out as the most graph-like approach</strong> &mdash; it builds implicit dependencies via <code>ref.watch()</code>. It is similar to Atoms in that dependencies are captured from reads, but its provider lifecycle and value-change filtering are Riverpod-specific.</p>
 
   <hr />
 
@@ -128,9 +128,9 @@ BlocBuilder<CounterBloc, int>(
   <h2 id="riverpod">Riverpod</h2>
   <p class="not-prose text-sm text-muted-foreground"><a href="https://github.com/rrousselGit/riverpod" class="underline underline-offset-4 hover:text-foreground">github.com/rrousselGit/riverpod</a></p>
 
-  <p><strong>Paradigm:</strong> Push + Implicit Graph &nbsp;|&nbsp; <strong>Status:</strong> Dominant graph-based solution</p>
+  <p><strong>Pattern:</strong> Reactive Provider Graph &nbsp;|&nbsp; <strong>Status:</strong> Widely used graph-like solution</p>
 
-  <p>Riverpod is a reactive state management library for Flutter that uses "providers" as atomic units of state. Dependencies are tracked automatically via <code>ref.watch()</code> &mdash; the act of watching a provider registers a dependency edge in the graph. When a source provider changes, all dependent providers are eagerly recomputed (push-based propagation).</p>
+  <p>Riverpod is a reactive state management library for Flutter that uses "providers" as units of state and computation. Dependencies are tracked automatically via <code>ref.watch()</code> &mdash; the act of watching a provider subscribes the current widget/provider to the watched provider. When a source provider changes, dependents can rebuild, and listeners are updated only when the exposed value changes.</p>
 
   <h3>How ref.watch() Works</h3>
 
@@ -141,7 +141,7 @@ BlocBuilder<CounterBloc, int>(
     <li>When <code>otherProvider</code> changes, this provider is marked for rebuild</li>
   </ol>
 
-  <p>This is the same implicit tracking pattern as Jotai's <code>get()</code> and Atoms' <code>context.watch()</code>, but with push-based update propagation.</p>
+  <p>This is the same broad family as Jotai's <code>get()</code> and Atoms' <code>context.watch()</code>: dependencies are captured while evaluating a derived value. The details differ: Riverpod uses provider invalidation/rebuild and value filtering inside a <code>ProviderScope</code>.</p>
 
   <h3>Basic State (NotifierProvider)</h3>
   <Code code={riverpodBasicCode} lang="dart" />
@@ -173,8 +173,8 @@ BlocBuilder<CounterBloc, int>(
 
   <h3>Trade-offs</h3>
   <ul>
-    <li><strong>Strengths:</strong> Auto-tracking via ref.watch(), rich provider type system, code generation support, ProviderScope for testing, dominant Flutter solution</li>
-    <li><strong>Weaknesses:</strong> Flutter-only, push propagation means glitch concerns apply, ProviderScope boilerplate, migration from Provider can be significant</li>
+    <li><strong>Strengths:</strong> Auto-tracking via ref.watch(), rich provider type system, code generation support, ProviderScope for testing, widely used Flutter solution</li>
+    <li><strong>Weaknesses:</strong> Flutter-only, provider lifecycle and scope rules take time to learn, ProviderScope boilerplate, migration from Provider can be significant</li>
   </ul>
 
   <hr />
@@ -182,14 +182,14 @@ BlocBuilder<CounterBloc, int>(
   <h2>Other Flutter State Solutions</h2>
 
   <h3>Provider (Legacy)</h3>
-  <p>Provider wraps Flutter's <code>InheritedWidget</code> with a simpler API. It is push-based with no dependency graph &mdash; state changes are broadcast via <code>notifyListeners()</code>:</p>
+  <p>Provider wraps Flutter's <code>InheritedWidget</code> with a simpler API. It is store-centric with no dependency graph &mdash; state changes are broadcast via <code>notifyListeners()</code>:</p>
   <Code code={providerLegacyCode} lang="dart" />
-  <p>Provider remains widely used but lacks compile-time safety and graph-based dependency tracking. Riverpod was created by the same author to address these limitations.</p>
+  <p>Provider remains widely used, but it is tied to widget-tree lookup and does not provide Riverpod-style provider graph tracking. Riverpod was created by the same author to address these limitations.</p>
 
   <h3>BLoC</h3>
   <p>BLoC (Business Logic Component) uses an event-driven, stream-based pattern. It enforces strict separation between UI and business logic:</p>
   <Code code={blocCode} lang="dart" />
-  <p>BLoC is push-based with no dependency graph. It excels at event-driven architectures but requires significant boilerplate compared to Riverpod.</p>
+  <p>BLoC is store-centric/event-centric with no automatic dependency graph. It excels at event-driven architectures but requires significant boilerplate compared to Riverpod.</p>
 
   <h3>GetX</h3>
   <p>GetX provides reactive state, navigation, and dependency injection in a single package. While popular, it mixes concerns and uses a global mutable state approach that diverges from Flutter's compositional philosophy.</p>
@@ -198,7 +198,7 @@ BlocBuilder<CounterBloc, int>(
 
   <h2>How Flutter Compares to Other Platforms</h2>
 
-  <p>Flutter's state management landscape most closely resembles <strong>iOS</strong> in terms of diversity and maturity. Both platforms have multiple competing approaches spanning push-based and graph-based paradigms.</p>
+  <p>Flutter's state management landscape most closely resembles <strong>iOS</strong> in terms of diversity and maturity. Both platforms have multiple competing approaches spanning store-centric and graph-centric patterns.</p>
 
   <div class="not-prose my-6 w-full overflow-auto rounded-lg border border-border bg-card">
     <table class="w-full min-w-[600px] caption-bottom text-sm">
@@ -225,9 +225,9 @@ BlocBuilder<CounterBloc, int>(
         </tr>
         <tr class="border-b transition-colors hover:bg-muted/50">
           <td class="p-4 align-middle font-medium text-foreground">Propagation</td>
-          <td class="p-4 align-middle text-muted-foreground">Push (eager)</td>
-          <td class="p-4 align-middle text-muted-foreground">Push (topo sort)</td>
-          <td class="p-4 align-middle text-muted-foreground">Pull (lazy)</td>
+          <td class="p-4 align-middle text-muted-foreground">Rebuild + value filter</td>
+          <td class="p-4 align-middle text-muted-foreground">Atom graph</td>
+          <td class="p-4 align-middle text-muted-foreground">Mounted atom graph</td>
         </tr>
         <tr class="transition-colors hover:bg-muted/50">
           <td class="p-4 align-middle font-medium text-foreground">Scope</td>
@@ -239,5 +239,5 @@ BlocBuilder<CounterBloc, int>(
     </table>
   </div>
 
-  <p>The key insight: <strong>Riverpod and Atoms are architectural siblings</strong> &mdash; both use implicit dependency graphs with push-based propagation, just in different frameworks (Flutter vs SwiftUI). Jotai shares the implicit graph but uses pull-based lazy evaluation instead.</p>
+  <p>The key insight: <strong>Riverpod, Atoms, and Jotai are architectural relatives</strong> &mdash; all three discover dependencies from reads. Riverpod rebuilds providers in a scoped container, Atoms propagates through an atom graph, and Jotai maintains a mounted atom graph in React.</p>
 </DocsLayout>

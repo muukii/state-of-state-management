@@ -3,29 +3,29 @@ title: "Why Both Approaches Coexist"
 order: 8
 ---
 
-### Push excels at...
+### Store-centric excels at...
 
-- **Predictability**: All state changes flow through explicit paths (actions, commits)
-- **Debugging**: Easy to trace what changed and why (action logs, middleware)
-- **Structure**: Enforces architectural patterns (unidirectional flow, reducer composition)
-- **Familiarity**: The dominant model in most ecosystems (Redux, MVI, MVVM)
+- **Predictability**: All state changes flow through explicit paths (actions, commits, events)
+- **Debugging**: Easy to trace what changed and why (action logs, middleware, reducers)
+- **Structure**: Enforces feature boundaries and unidirectional flow
+- **Familiarity**: The dominant baseline in many ecosystems (Redux, MVI, MVVM, BLoC)
 
-### Pull excels at...
+### Atomic / Graph-centric excels at...
 
-- **Fine-grained updates**: Only the exact consumers of changed state are invalidated
-- **Reduced boilerplate**: No manual wiring of dependencies
+- **Fine-grained derived state**: Small values compose into other values directly
+- **Reduced wiring**: Dependencies can be discovered from reads instead of listed manually
 - **Dynamic dependencies**: Dependencies can change based on runtime conditions
-- **Scalability of derived state**: Adding a new derived value doesn't require modifying existing wiring
+- **Scalability of derived state**: Adding a new derived value does not require modifying existing store wiring
 
 ### The real question isn't "which is better"
 
-Both push and pull architectures need derived state. The question is whether the **dependency tracking for that derived state** should be:
+Both families need derived state. The question is whether the **dependency tracking for that derived state** should be:
 
 1. **Manual** — the developer wires it (StateFlow `combine`, Zustand selectors)
-2. **Declarative** — the developer declares it (TanStack Store `deps`, Verge `Derived`)
-3. **Automatic** — the runtime discovers it (Jotai `get()`, Atoms `watch()`, swift-state-graph ThreadLocal, Compose Snapshot)
+2. **Explicit** — the developer declares a store-local pipeline (Verge `Derived`)
+3. **Automatic** — the runtime discovers it (Jotai `get()`, Atoms `watch()`, Riverpod `ref.watch()`, TanStack Store `.state`, swift-state-graph ThreadLocal, Compose Snapshot)
 
-Graph-based tracking (options 2 and 3) reduces the manual wiring cost. It can be applied within a push architecture (Verge, TanStack Store) or as the foundation of a pull architecture (Jotai, swift-state-graph).
+Graph-based tracking reduces manual wiring cost. It can appear as the core model of atomic systems, as a signals-style store runtime, or as a supporting feature inside store-centric systems.
 
 ### Cross-platform Summary
 
@@ -34,28 +34,33 @@ Graph-based tracking (options 2 and 3) reduces the manual wiring cost. It can be
 <thead class="[&_tr]:border-b">
 <tr class="border-b transition-colors">
 <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Platform</th>
-<th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Push-based (Mainstream)</th>
-<th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Pull-based / Graph (Emerging)</th>
+<th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Store-centric</th>
+<th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Atomic / Graph-centric</th>
 </tr>
 </thead>
 <tbody class="[&_tr:last-child]:border-0">
 <tr class="border-b transition-colors hover:bg-muted/50">
 <td class="p-4 align-middle font-medium text-foreground">Web</td>
 <td class="p-4 align-middle text-muted-foreground">Redux, Zustand</td>
-<td class="p-4 align-middle text-muted-foreground">Jotai, Signals, TanStack Store (push+graph)</td>
+<td class="p-4 align-middle text-muted-foreground">Jotai, Signals, TanStack Store</td>
 </tr>
 <tr class="border-b transition-colors hover:bg-muted/50">
 <td class="p-4 align-middle font-medium text-foreground">iOS</td>
 <td class="p-4 align-middle text-muted-foreground">Verge, TCA</td>
-<td class="p-4 align-middle text-muted-foreground">Atoms (push+graph), swift-state-graph</td>
+<td class="p-4 align-middle text-muted-foreground">Atoms, swift-state-graph</td>
 </tr>
 <tr class="transition-colors hover:bg-muted/50">
 <td class="p-4 align-middle font-medium text-foreground">Android</td>
 <td class="p-4 align-middle text-muted-foreground">ViewModel + StateFlow</td>
-<td class="p-4 align-middle text-muted-foreground">Compose derivedStateOf (UI layer only)</td>
+<td class="p-4 align-middle text-muted-foreground">Compose derivedStateOf, ReactiveState-Kotlin</td>
+</tr>
+<tr class="transition-colors hover:bg-muted/50">
+<td class="p-4 align-middle font-medium text-foreground">Flutter</td>
+<td class="p-4 align-middle text-muted-foreground">Provider, BLoC</td>
+<td class="p-4 align-middle text-muted-foreground">Riverpod</td>
 </tr>
 </tbody>
 </table>
 </div>
 
-The trend is not a wholesale shift from push to pull. Rather, **graph-based dependency tracking for derived state** is being adopted across paradigms — sometimes within push systems (Verge's `Derived`, TanStack Store), sometimes as the core of pull systems (Jotai, swift-state-graph), and sometimes within the UI framework itself (Compose, Signals).
+The trend is not a wholesale shift from store-centric to atomic/graph-centric. Rather, **derived state dependency management is becoming more explicit and more automated**, and each ecosystem is adopting that idea at a different layer.

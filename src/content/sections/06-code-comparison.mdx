@@ -5,7 +5,7 @@ order: 6
 
 The same operation — **deriving `doubled` from `count`** — across all libraries.
 
-### Push-based Libraries
+### Store-centric Libraries
 
 #### Verge
 
@@ -67,17 +67,14 @@ const useStore = create((set) => ({
 const doubled = useStore((state) => state.count * 2)
 ```
 
-#### TanStack Store (Explicit Graph)
+#### TanStack Store (Signals-style Graph)
 
 ```typescript
-const countStore = new Store(0)
-const doubled = new Derived({
-  deps: [countStore],          // ← Dependencies declared explicitly
-  fn: () => countStore.state * 2,
-})
+const countStore = createStore(0)
+const doubled = createStore(() => countStore.state * 2)
 ```
 
-### Pull-based Libraries
+### Atomic / Graph-centric Libraries
 
 #### Jotai (Implicit Graph)
 

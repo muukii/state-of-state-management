@@ -1,0 +1,247 @@
+---
+import DocsLayout from '../layouts/DocsLayout.astro';
+import { Code } from 'astro:components';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const vergeStoreCode = `import Verge
+
+struct MyState: Equatable {
+  var count: Int = 0
+  var name: String = ""
+}
+
+let store = Store<MyState, Never>(initialState: .init())
+
+// Commit-based mutation
+store.commit {
+  $0.count += 1
+}`;
+
+const vergeDerivedCode = `// Derived pipeline — store-scoped derived state
+let countDerived = store.derived(.map(\.count))
+
+// Observe with ifChanged for skip-redundant
+store.sinkState { state in
+  state.ifChanged(\.count) { count in
+    print("Count changed to \\(count)")
+  }
+}`;
+
+const vergeTrackingCode = `// @Tracking macro for SwiftUI
+@Tracking
+struct ContentView: View {
+  let store: Store<MyState, Never>
+
+  var body: some View {
+    // Only re-renders when accessed properties change
+    Text("Count: \\(store.state.count)")
+  }
+}`;
+
+const tcaFeatureCode = `import ComposableArchitecture
+
+@Reducer
+struct CounterFeature {
+  @ObservableState
+  struct State: Equatable {
+    var count = 0
+  }
+
+  enum Action {
+    case increment
+    case decrement
+    case reset
+  }
+
+  var body: some ReducerOf<Self> {
+    Reduce { state, action in
+      switch action {
+      case .increment:
+        state.count += 1
+        return .none
+      case .decrement:
+        state.count -= 1
+        return .none
+      case .reset:
+        state.count = 0
+        return .none
+      }
+    }
+  }
+}`;
+
+const tcaViewCode = `struct CounterView: View {
+  let store: StoreOf<CounterFeature>
+
+  var body: some View {
+    VStack {
+      Text("Count: \\(store.count)")
+      HStack {
+        Button("-") { store.send(.decrement) }
+        Button("+") { store.send(.increment) }
+      }
+    }
+  }
+}`;
+
+const tcaCompositionCode = `// Reducer composition with Scope
+@Reducer
+struct AppFeature {
+  struct State: Equatable {
+    var counter = CounterFeature.State()
+    var optionalChild: ChildFeature.State?
+    var rows: IdentifiedArrayOf<RowFeature.State> = []
+  }
+
+  enum Action {
+    case counter(CounterFeature.Action)
+    case optionalChild(ChildFeature.Action)
+    case rows(IdentifiedActionOf<RowFeature>)
+  }
+
+  var body: some ReducerOf<Self> {
+    Scope(state: \\.counter, action: \\.counter) {
+      CounterFeature()
+    }
+    .ifLet(\\.optionalChild, action: \\.optionalChild) {
+      ChildFeature()
+    }
+    .forEach(\\.rows, action: \\.rows) {
+      RowFeature()
+    }
+  }
+}`;
+
+const tcaTestCode = `// TestStore for exhaustive testing
+@Test func increment() async {
+  let store = TestStore(
+    initialState: CounterFeature.State()
+  ) {
+    CounterFeature()
+  }
+
+  await store.send(.increment) {
+    $0.count = 1
+  }
+}`;
+
+const zustandCode = `import { create } from 'zustand';
+
+const useStore = create((set) => ({
+  count: 0,
+  increment: () => set((s) => ({ count: s.count + 1 })),
+  decrement: () => set((s) => ({ count: s.count - 1 })),
+}));
+
+// In a component — selector-based subscription
+function Counter() {
+  const count = useStore((s) => s.count);
+  const increment = useStore((s) => s.increment);
+  return <button onClick={increment}>{count}</button>;
+}`;
+
+const zustandDerivedCode = `// Derived state via selectors (no graph)
+function DoubledDisplay() {
+  const doubled = useStore((s) => s.count * 2);
+  return <span>{doubled}</span>;
+}
+
+// Zustand internals: Set<Listener>
+// Every set() call iterates all listeners
+// Each listener runs its selector + Object.is check`;
+
+---
+
+<DocsLayout title="Store-centric Libraries" currentPath={`${base}/store/`}>
+  <h1>Store-centric Libraries</h1>
+  <p class="text-lg text-muted-foreground !mt-2">
+    Deep dives into libraries that organize state around feature stores, reducers, or explicit mutation boundaries.
+  </p>
+
+  <hr />
+
+  <!-- Verge -->
+  <h2 id="verge">Verge</h2>
+  <p class="not-prose text-sm text-muted-foreground"><a href="https://github.com/VergeGroup/swift-verge" class="underline underline-offset-4 hover:text-foreground">github.com/VergeGroup/swift-verge</a></p>
+
+  <p><strong>Platform:</strong> Swift (SwiftUI &amp; UIKit) &nbsp;|&nbsp; <strong>Pattern:</strong> Store-centric, Flux-inspired</p>
+
+  <p>Verge provides a commit-based mutation model inspired by Flux/Vuex. State changes are explicit and serialized through <code>commit</code> closures, making every mutation traceable.</p>
+
+  <h3>Store &amp; Commit</h3>
+  <Code code={vergeStoreCode} lang="swift" />
+
+  <h3>Derived Pipeline</h3>
+  <p>Verge supports derived state through a cached pipeline. A <code>Derived</code> value maps over store state, keeps the transformed result, and emits downstream only when the pipeline result changes. The <code>ifChanged</code> pattern skips redundant notifications:</p>
+  <Code code={vergeDerivedCode} lang="swift" />
+
+  <h3>@Tracking for SwiftUI</h3>
+  <p>The <code>@Tracking</code> macro enables fine-grained observation in SwiftUI &mdash; only properties accessed during <code>body</code> evaluation trigger re-renders:</p>
+  <Code code={vergeTrackingCode} lang="swift" />
+
+  <h3>Trade-offs</h3>
+  <ul>
+    <li><strong>Strengths:</strong> Mature ecosystem, UIKit + SwiftUI support, explicit mutation tracking, Derived pipeline</li>
+    <li><strong>Weaknesses:</strong> Requires explicit commit discipline, Derived dependencies are declared (not auto-tracked)</li>
+  </ul>
+
+  <hr />
+
+  <!-- TCA -->
+  <h2 id="tca">The Composable Architecture (TCA)</h2>
+  <p class="not-prose text-sm text-muted-foreground"><a href="https://github.com/pointfreeco/swift-composable-architecture" class="underline underline-offset-4 hover:text-foreground">github.com/pointfreeco/swift-composable-architecture</a></p>
+
+  <p><strong>Platform:</strong> Swift (SwiftUI) &nbsp;|&nbsp; <strong>Pattern:</strong> Store-centric, Elm-inspired</p>
+
+  <p>TCA follows the Elm architecture: <code>Store.send(action)</code> dispatches to a <code>Reducer</code> which produces new <code>State</code> + optional <code>Effect</code>s. The unidirectional data flow is strict and exhaustively testable.</p>
+
+  <h3>Feature Definition</h3>
+  <Code code={tcaFeatureCode} lang="swift" />
+
+  <h3>View Layer</h3>
+  <Code code={tcaViewCode} lang="swift" />
+
+  <h3>Reducer Composition</h3>
+  <p>TCA's most powerful feature is its composition operators. <code>Scope</code> focuses on child state, <code>ifLet</code> handles optional children, and <code>forEach</code> manages collections:</p>
+  <Code code={tcaCompositionCode} lang="swift" />
+
+  <h3>TestStore</h3>
+  <p>TCA provides exhaustive testing: every state change and effect must be explicitly asserted:</p>
+  <Code code={tcaTestCode} lang="swift" />
+
+  <h3>Action Buffering (Trampolining)</h3>
+  <p>When a reducer returns an effect that immediately sends another action, TCA buffers it rather than processing recursively. Actions are replayed sequentially after the current reducer completes.</p>
+
+  <h3>Trade-offs</h3>
+  <ul>
+    <li><strong>Strengths:</strong> Exhaustive testing, powerful composition, structured side effects, large community</li>
+    <li><strong>Weaknesses:</strong> Significant boilerplate, no automatic dependency tracking, steep learning curve, SwiftUI-focused</li>
+  </ul>
+
+  <hr />
+
+  <!-- Zustand -->
+  <h2 id="zustand">Zustand</h2>
+  <p class="not-prose text-sm text-muted-foreground"><a href="https://github.com/pmndrs/zustand" class="underline underline-offset-4 hover:text-foreground">github.com/pmndrs/zustand</a></p>
+
+  <p><strong>Platform:</strong> TypeScript (React) &nbsp;|&nbsp; <strong>Pattern:</strong> Store-centric, minimal</p>
+
+  <p>Zustand is a small React-first state manager with a vanilla store core. It provides a <code>Set&lt;Listener&gt;</code> subscription model with selector-based derived reads. No dependency graph, no middleware by default &mdash; just a store and listeners.</p>
+
+  <h3>Store &amp; Component</h3>
+  <Code code={zustandCode} lang="typescript" />
+
+  <h3>Derived State</h3>
+  <Code code={zustandDerivedCode} lang="typescript" />
+
+  <h3>How It Works</h3>
+  <p>Internally, Zustand maintains a <code>Set&lt;Listener&gt;</code>. Every <code>set()</code> call iterates all registered listeners. Each listener runs its selector function and compares the result with <code>Object.is</code> &mdash; if different, the component re-renders.</p>
+
+  <h3>Trade-offs</h3>
+  <ul>
+    <li><strong>Strengths:</strong> Extremely small, simple mental model, no boilerplate, excellent TypeScript support</li>
+    <li><strong>Limitations:</strong> No dependency tracking, no automatic graph, selectors are manual, all listeners notified on every change</li>
+  </ul>
+
+</DocsLayout>

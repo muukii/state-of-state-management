@@ -1,0 +1,32 @@
+---
+title: "Store vs Atomic"
+order: 2
+---
+
+### Store-centric
+
+Store-centric systems organize state behind a feature or application boundary. A store, reducer, ViewModel, or BLoC owns a coherent state shape and exposes actions, selectors, or derived values around it.
+
+- The feature boundary owns the state shape
+- Mutations are explicit: actions, commits, events, setters
+- Derived state is usually selector/computed/pipeline/combine based
+- Representatives: **Redux**, **Zustand**, **TCA**, **Verge**, Provider, BLoC, ViewModel + StateFlow
+
+### Atomic / Graph-centric
+
+Atomic and graph-centric systems organize state as small units that compose into other units. The runtime can capture dependencies while derived values are evaluated.
+
+- Atoms/providers/signals/nodes are the primary units
+- Derived state is first-class
+- Dependencies are often captured from reads: `get()`, `watch()`, `ref.watch()`, `.state`, Snapshot reads
+- Representatives: **Jotai**, **Atoms**, **Riverpod**, **swift-state-graph**, **TanStack Store**, Signals, Compose `derivedStateOf`
+
+### Why push/pull is secondary
+
+Push and pull describe how values are evaluated or delivered. They matter, but they are not the best top-level taxonomy:
+
+- A store-centric system can still have fine-grained selectors.
+- An atomic system can still notify mounted subscribers.
+- Signals-style systems are often push-pull hybrids.
+
+The first design question is: **does the application model state as feature-owned stores, or as composable dependency nodes?**

@@ -4,15 +4,15 @@ import { Code } from 'astro:components';
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
-const vergeDoubledCode = `// Verge — Push, explicit derived
+const vergeDoubledCode = `// Verge — store-centric, explicit derived
 let store = Store<MyState, Never>(initialState: .init())
 
 let doubled = store.derived(.map(\\.count).map { $0 * 2 })
 
 store.commit { $0.count = 5 }
-// doubled pushes 10 to subscribers`;
+// doubled emits 10 to subscribers`;
 
-const tcaDoubledCode = `// TCA — Push, computed property on State
+const tcaDoubledCode = `// TCA — store-centric, computed property on State
 @Reducer
 struct Feature {
   @ObservableState
@@ -34,18 +34,18 @@ struct Feature {
   }
 }`;
 
-const atomsDoubledCode = `// Atoms — Push + implicit graph
+const atomsDoubledCode = `// Atoms — atomic graph
 struct CountAtom: StateAtom, Hashable {
   func defaultValue(context: Context) -> Int { 0 }
 }
 
 struct DoubledAtom: ValueAtom, Hashable {
   func value(context: Context) -> Int {
-    context.watch(CountAtom()) * 2  // auto-tracked, push-propagated
+    context.watch(CountAtom()) * 2  // auto-tracked graph edge
   }
 }`;
 
-const zustandDoubledCode = `// Zustand — Push, selector-based
+const zustandDoubledCode = `// Zustand — store-centric, selector-based
 const useStore = create((set) => ({
   count: 0,
   increment: () => set((s) => ({ count: s.count + 1 })),
@@ -57,21 +57,21 @@ function Doubled() {
   return <span>{doubled}</span>;
 }`;
 
-const tanstackDoubledCode = `// TanStack Store — Push + explicit graph
-const countStore = new Store(0);
+const tanstackDoubledCode = `// TanStack Store — signals-style graph
+const countStore = createStore(0);
 
-const doubled = new Derived({
-  deps: [countStore],
-  fn: ({ currDepVals: [count] }) => count * 2,
-});`;
+const doubled = createStore(() => countStore.state * 2);
 
-const jotaiDoubledCode = `// Jotai — Pull, auto-tracked
+countStore.setState(() => 5);
+console.log(doubled.state); // 10`;
+
+const jotaiDoubledCode = `// Jotai — atom graph, auto-tracked
 const countAtom = atom(0);
 
 const doubledAtom = atom((get) => get(countAtom) * 2);
 // dependency on countAtom registered via get()`;
 
-const ssgDoubledCode = `// swift-state-graph — Pull, DAG-based
+const ssgDoubledCode = `// swift-state-graph — DAG-based graph
 struct MyGraph {
   @Stored var count: Int = 0
 
@@ -80,7 +80,7 @@ struct MyGraph {
   }
 }`;
 
-const composeDoubledCode = `// Compose derivedStateOf — Pull, Snapshot system
+const composeDoubledCode = `// Compose derivedStateOf — Snapshot graph
 @Composable
 fun DoubledDisplay(viewModel: MyViewModel) {
   val count by viewModel.count.collectAsState()
@@ -92,7 +92,7 @@ fun DoubledDisplay(viewModel: MyViewModel) {
   Text("Doubled: $doubled")
 }`;
 
-const riverpodDoubledCode = `// Riverpod — Push + implicit graph
+const riverpodDoubledCode = `// Riverpod — provider graph
 final countProvider = StateProvider((ref) => 0);
 
 final doubledProvider = Provider((ref) {
@@ -129,16 +129,16 @@ final doubledProvider = Provider((ref) {
       </thead>
       <tbody class="[&_tr:last-child]:border-0">
         <tr class="border-b transition-colors hover:bg-muted/50">
-          <td class="p-4 align-middle font-medium text-foreground bg-card">Paradigm</td>
-          <td class="p-4 align-middle text-muted-foreground">Push</td>
-          <td class="p-4 align-middle text-muted-foreground">Push</td>
-          <td class="p-4 align-middle text-muted-foreground">Push</td>
-          <td class="p-4 align-middle text-muted-foreground">Push</td>
-          <td class="p-4 align-middle text-muted-foreground">Push</td>
-          <td class="p-4 align-middle text-muted-foreground">Push</td>
-          <td class="p-4 align-middle text-muted-foreground">Pull</td>
-          <td class="p-4 align-middle text-muted-foreground">Pull</td>
-          <td class="p-4 align-middle text-muted-foreground">Pull</td>
+          <td class="p-4 align-middle font-medium text-foreground bg-card">Pattern</td>
+          <td class="p-4 align-middle text-muted-foreground">Store-centric</td>
+          <td class="p-4 align-middle text-muted-foreground">Store-centric</td>
+          <td class="p-4 align-middle text-muted-foreground">Atomic graph</td>
+          <td class="p-4 align-middle text-muted-foreground">Provider graph</td>
+          <td class="p-4 align-middle text-muted-foreground">Store-centric</td>
+          <td class="p-4 align-middle text-muted-foreground">Signals graph</td>
+          <td class="p-4 align-middle text-muted-foreground">Atom graph</td>
+          <td class="p-4 align-middle text-muted-foreground">DAG graph</td>
+          <td class="p-4 align-middle text-muted-foreground">Compose graph</td>
         </tr>
         <tr class="border-b transition-colors hover:bg-muted/50">
           <td class="p-4 align-middle font-medium text-foreground bg-card">Graph</td>
@@ -147,7 +147,7 @@ final doubledProvider = Provider((ref) {
           <td class="p-4 align-middle text-muted-foreground">Implicit</td>
           <td class="p-4 align-middle text-muted-foreground">Implicit auto</td>
           <td class="p-4 align-middle text-muted-foreground">None</td>
-          <td class="p-4 align-middle text-muted-foreground">Explicit</td>
+          <td class="p-4 align-middle text-muted-foreground">Implicit auto</td>
           <td class="p-4 align-middle text-muted-foreground">Implicit</td>
           <td class="p-4 align-middle text-muted-foreground">Implicit</td>
           <td class="p-4 align-middle text-muted-foreground">Implicit</td>
@@ -159,7 +159,7 @@ final doubledProvider = Provider((ref) {
           <td class="p-4 align-middle text-muted-foreground">Atom</td>
           <td class="p-4 align-middle text-muted-foreground">Provider types</td>
           <td class="p-4 align-middle text-muted-foreground">Store</td>
-          <td class="p-4 align-middle text-muted-foreground">Store + Derived</td>
+          <td class="p-4 align-middle text-muted-foreground">Store / Atom</td>
           <td class="p-4 align-middle text-muted-foreground">Atom</td>
           <td class="p-4 align-middle text-muted-foreground">Stored + Computed</td>
           <td class="p-4 align-middle text-muted-foreground">State + derivedStateOf</td>
@@ -171,7 +171,7 @@ final doubledProvider = Provider((ref) {
           <td class="p-4 align-middle text-muted-foreground">ValueAtom</td>
           <td class="p-4 align-middle text-muted-foreground">Provider (ref.watch)</td>
           <td class="p-4 align-middle text-muted-foreground">Selector function</td>
-          <td class="p-4 align-middle text-muted-foreground">Derived class</td>
+          <td class="p-4 align-middle text-muted-foreground">Derived store</td>
           <td class="p-4 align-middle text-muted-foreground">Derived atom</td>
           <td class="p-4 align-middle text-muted-foreground">@Computed node</td>
           <td class="p-4 align-middle text-muted-foreground">derivedStateOf block</td>
@@ -183,22 +183,22 @@ final doubledProvider = Provider((ref) {
           <td class="p-4 align-middle text-muted-foreground">Auto (watch)</td>
           <td class="p-4 align-middle text-muted-foreground">Auto (ref.watch())</td>
           <td class="p-4 align-middle text-muted-foreground">Manual (selector)</td>
-          <td class="p-4 align-middle text-muted-foreground">Manual (deps array)</td>
+          <td class="p-4 align-middle text-muted-foreground">Auto (state reads)</td>
           <td class="p-4 align-middle text-muted-foreground">Auto (get)</td>
           <td class="p-4 align-middle text-muted-foreground">Auto (ThreadLocal)</td>
           <td class="p-4 align-middle text-muted-foreground">Auto (Snapshot)</td>
         </tr>
         <tr class="border-b transition-colors hover:bg-muted/50">
           <td class="p-4 align-middle font-medium text-foreground bg-card">Evaluation</td>
-          <td class="p-4 align-middle text-muted-foreground">Eager</td>
-          <td class="p-4 align-middle text-muted-foreground">Eager</td>
-          <td class="p-4 align-middle text-muted-foreground">Eager (topo sort)</td>
-          <td class="p-4 align-middle text-muted-foreground">Eager (push)</td>
-          <td class="p-4 align-middle text-muted-foreground">Eager</td>
-          <td class="p-4 align-middle text-muted-foreground">Eager</td>
+          <td class="p-4 align-middle text-muted-foreground">Cached emit</td>
+          <td class="p-4 align-middle text-muted-foreground">Action-driven</td>
+          <td class="p-4 align-middle text-muted-foreground">Watched + topo</td>
+          <td class="p-4 align-middle text-muted-foreground">Rebuild + value filter</td>
+          <td class="p-4 align-middle text-muted-foreground">Eager notify</td>
+          <td class="p-4 align-middle text-muted-foreground">Lazy dirty-check</td>
+          <td class="p-4 align-middle text-muted-foreground">Mounted graph updates</td>
           <td class="p-4 align-middle text-muted-foreground">Lazy</td>
-          <td class="p-4 align-middle text-muted-foreground">Lazy</td>
-          <td class="p-4 align-middle text-muted-foreground">Lazy</td>
+          <td class="p-4 align-middle text-muted-foreground">Value-filtered</td>
         </tr>
         <tr class="border-b transition-colors hover:bg-muted/50">
           <td class="p-4 align-middle font-medium text-foreground bg-card">Composition</td>
@@ -207,7 +207,7 @@ final doubledProvider = Provider((ref) {
           <td class="p-4 align-middle text-muted-foreground">Atom composition</td>
           <td class="p-4 align-middle text-muted-foreground">ProviderScope</td>
           <td class="p-4 align-middle text-muted-foreground">Slices</td>
-          <td class="p-4 align-middle text-muted-foreground">Store + Derived graph</td>
+          <td class="p-4 align-middle text-muted-foreground">Store graph</td>
           <td class="p-4 align-middle text-muted-foreground">Atom composition</td>
           <td class="p-4 align-middle text-muted-foreground">Node graph (DAG)</td>
           <td class="p-4 align-middle text-muted-foreground">Composable scope</td>
@@ -243,7 +243,7 @@ final doubledProvider = Provider((ref) {
           <td class="p-4 align-middle text-muted-foreground">SwiftUI</td>
           <td class="p-4 align-middle text-muted-foreground">Flutter</td>
           <td class="p-4 align-middle text-muted-foreground">React</td>
-          <td class="p-4 align-middle text-muted-foreground">React / Vue / Solid / Angular</td>
+          <td class="p-4 align-middle text-muted-foreground">React / Vue / Solid / Angular / Svelte</td>
           <td class="p-4 align-middle text-muted-foreground">React</td>
           <td class="p-4 align-middle text-muted-foreground">SwiftUI / UIKit</td>
           <td class="p-4 align-middle text-muted-foreground">Jetpack Compose</td>
@@ -258,7 +258,7 @@ final doubledProvider = Provider((ref) {
 
   <p>The simplest possible derived state: compute <code>doubled = count * 2</code>. This isolates each library's approach to dependency declaration and derived state evaluation.</p>
 
-  <h3>Push-based</h3>
+  <h3>Store-centric</h3>
 
   <h4>Verge</h4>
   <Code code={vergeDoubledCode} lang="swift" />
@@ -266,22 +266,22 @@ final doubledProvider = Provider((ref) {
   <h4>TCA</h4>
   <Code code={tcaDoubledCode} lang="swift" />
 
+  <h4>Zustand</h4>
+  <Code code={zustandDoubledCode} lang="tsx" />
+
+  <h3>Atomic / Graph-centric</h3>
+
+  <h4>Jotai</h4>
+  <Code code={jotaiDoubledCode} lang="typescript" />
+
   <h4>Atoms</h4>
   <Code code={atomsDoubledCode} lang="swift" />
 
   <h4>Riverpod</h4>
   <Code code={riverpodDoubledCode} lang="dart" />
 
-  <h4>Zustand</h4>
-  <Code code={zustandDoubledCode} lang="tsx" />
-
   <h4>TanStack Store</h4>
   <Code code={tanstackDoubledCode} lang="typescript" />
-
-  <h3>Pull-based</h3>
-
-  <h4>Jotai</h4>
-  <Code code={jotaiDoubledCode} lang="typescript" />
 
   <h4>swift-state-graph</h4>
   <Code code={ssgDoubledCode} lang="swift" />
@@ -302,9 +302,12 @@ final doubledProvider = Provider((ref) {
     <li><a href="https://github.com/pmndrs/jotai">Jotai</a> &mdash; pmndrs</li>
     <li><a href="https://github.com/VergeGroup/swift-state-graph">swift-state-graph</a> &mdash; VergeGroup</li>
     <li><a href="https://github.com/rrousselGit/riverpod">Riverpod</a> &mdash; rrousselGit</li>
-    <li><a href="https://developer.android.com/develop/ui/compose/state">Compose derivedStateOf</a> &mdash; Android Developers</li>
+    <li><a href="https://developer.android.com/develop/ui/compose/side-effects#derivedstateof">Compose derivedStateOf</a> &mdash; Android Developers</li>
     <li><a href="https://github.com/ensody/ReactiveState-Kotlin">ReactiveState-Kotlin</a> &mdash; ensody</li>
     <li><a href="https://jotai.org/docs/guides/core-internals">Jotai Core Internals</a></li>
+    <li><a href="https://tanstack.com/store/latest/docs/quick-start">TanStack Store Quick Start</a></li>
+    <li><a href="https://riverpod.dev/docs/concepts2/refs">Riverpod Refs</a></li>
+    <li><a href="https://docs-v2.riverpod.dev/docs/providers/provider">Riverpod Provider</a></li>
     <li><a href="https://blog.zachklipp.com/how-derivedstateof-works-a-deep-d-er-ive/">How derivedStateOf works</a> &mdash; Zach Klipp</li>
   </ul>
 </DocsLayout>

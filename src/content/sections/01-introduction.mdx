@@ -3,11 +3,11 @@ title: "Introduction"
 order: 1
 ---
 
-In frontend and mobile development, the question of **how to manage state** continues to evolve. This report organizes the landscape along two independent axes:
+In frontend and mobile development, the question of **how to manage state** continues to evolve. This report organizes the landscape around the primary design split:
 
-1. **Push vs Pull** — how state changes flow to consumers
-2. **Graph-based dependency tracking** — a technique for managing derived state, applicable to either push or pull systems
+1. **Store-centric** — state is organized around feature stores, reducers, ViewModels, or BLoCs
+2. **Atomic / Graph-centric** — state is organized as composable atoms, providers, signals, or graph nodes
 
-Push and Pull describe the **direction of data flow**. Graph describes **how derived state dependencies are managed** — and it can appear in both push and pull architectures.
+Push and pull still describe the **evaluation model**, but they are a secondary axis. The higher-level design question is whether the app models state as feature-owned stores or as a dependency graph of small values.
 
 This report compares the design philosophies, internal architectures, and code styles of major libraries across Web, iOS, and Android.

@@ -3,10 +3,10 @@ title: "Conclusion"
 order: 9
 ---
 
-State management architecture should be understood along two independent axes:
+State management architecture is easiest to understand by starting with the primary design unit:
 
-**Push vs Pull** determines how state changes flow to consumers. Push is explicit and structured; pull is fine-grained and lazy. Both are valid, and the choice depends on the application's needs and the team's priorities.
+**Store-centric systems** organize state around feature-owned stores, reducers, ViewModels, or BLoCs. They are explicit, structured, and easy to trace.
 
-**Graph-based dependency tracking** is a technique — not a paradigm. It addresses the universal need for derived state by managing dependencies as a DAG, reducing manual wiring. This technique is appearing across both push and pull systems, across Web, iOS, and Android.
+**Atomic / Graph-centric systems** organize state around small composable values: atoms, providers, signals, or nodes. They make derived state first-class and often capture dependencies automatically from reads.
 
-The real evolution is not "push to pull" but rather: **derived state dependency management is becoming increasingly automated**, regardless of whether the underlying architecture pushes or pulls.
+Push and pull still matter, but they are lower-level evaluation semantics. The real evolution is: **derived state dependency management is becoming increasingly explicit and automated**, whether the surrounding architecture is store-centric, atomic, or signals-style.

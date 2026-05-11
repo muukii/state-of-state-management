@@ -20,7 +20,6 @@ const excelCode = `// An app's entire state can be modeled as a spreadsheet:
 //   A3: =A1+A2     ← computed (derived)
 //   A4: =A3*0.1    ← computed (derived from derived)
 //
-// Excel already solved this in the 1980s.
 // The question is: how does the engine know
 // that changing A1 should update A3 and A4?`;
 
@@ -178,23 +177,26 @@ view.layoutIfNeeded()   // = "recompute if dirty"
 // you'd get 3 layout passes instead of 1.`;
 ---
 
-<DocsLayout title="How Dependency Capture Works" currentPath={`${base}/internals/`}>
-  <h1>How Dependency Capture Works</h1>
+<DocsLayout title="Dependency Graphs Are Everywhere" currentPath={`${base}/internals/`}>
+  <h1>Dependency Graphs Are Everywhere</h1>
   <p class="text-lg text-muted-foreground !mt-2">
-    The internal mechanics that make graph-based state management possible.
+    The same stored-and-computed structure appears in spreadsheets, UI layout, build systems, and atomic state libraries.
+  </p>
+  <p>
+    Atomic state management is easier to understand once it stops feeling like a special UI trick. It is one instance of a broader pattern: model values as nodes, record which nodes depend on which other nodes, and recompute only the affected parts when a source changes.
   </p>
 
   <hr />
 
-  <h2>The Excel Insight</h2>
+  <h2>Spreadsheet as a Dependency Graph</h2>
 
-  <p>The best mental model for graph-based state management is something that has existed since the 1980s: <strong>a spreadsheet</strong>.</p>
+  <p>A useful mental model for atomic and graph-based state management is something familiar: <strong>a spreadsheet</strong>.</p>
 
   <p>An Excel spreadsheet is a massive grid of cells. Each cell is either a <strong>stored value</strong> (you type a number) or a <strong>computed value</strong> (a formula like <code>=A1+B1</code>). When you change a stored cell, every formula that depends on it automatically updates. The spreadsheet engine knows the dependency graph and recomputes only what's needed.</p>
 
   <Code code={excelCode} lang="swift" />
 
-  <p>This is exactly what graph-based state management does. An application's entire state — no matter how complex — can be modeled as stored values and computed values with dependencies between them. The engine that powers Excel's cell updates is, in essence, the same engine that powers SwiftUI's view updates, Jotai's atom graph, and swift-state-graph's node system.</p>
+  <p>This is the key idea behind atomic and graph-based state management. An application's state can be modeled as stored values and computed values with dependencies between them. Excel, SwiftUI's view updates, Jotai's atom graph, and swift-state-graph's node system all sit in the same broad family of dependency-driven recomputation.</p>
 
   <p>The algorithms behind this aren't new. SwiftUI's AttributedGraph is based on academic papers from the 1970s and 1980s. Nothing in this space is truly novel — it's established computer science being applied to UI frameworks.</p>
 
@@ -288,7 +290,7 @@ view.layoutIfNeeded()   // = "recompute if dirty"
 
   <Code code={captureStackCode} lang="swift" />
 
-  <p>This is the technique that makes Jotai's <code>get()</code>, Atoms' <code>context.watch()</code>, Riverpod's <code>ref.watch()</code>, and swift-state-graph's property access all work. The specific API differs, but the underlying mechanism is the same: <strong>set a context before executing the closure, observe accesses during execution, build edges from those accesses</strong>.</p>
+  <p>This is the broad technique behind Jotai's <code>get()</code>, Atoms' <code>context.watch()</code>, Riverpod's <code>ref.watch()</code>, and swift-state-graph's property access. The specific runtime details differ, but the shared shape is: <strong>set a context before executing the closure, observe accesses during execution, build edges from those accesses</strong>.</p>
 
   <h3>Nested Computed Values (Stack Behavior)</h3>
 
@@ -322,7 +324,7 @@ view.layoutIfNeeded()   // = "recompute if dirty"
 
   <p>If a property is never accessed in the current execution path, the view has no dependency on it, and changes to that property will <strong>not</strong> trigger a re-evaluation of <code>body</code>.</p>
 
-  <p>This is not SwiftUI-specific magic. It's the same ambient capture pattern used by Jotai, swift-state-graph, and every other graph-based system. SwiftUI just happens to be the most widely-used implementation of it.</p>
+  <p>This is not SwiftUI-specific magic. It is the same family of ambient capture pattern used by systems such as Jotai and swift-state-graph. SwiftUI just happens to be the most widely-used implementation of it.</p>
 
   <hr />
 
@@ -340,7 +342,7 @@ view.layoutIfNeeded()   // = "recompute if dirty"
 
   <Code code={setNeedsLayoutCode} lang="swift" />
 
-  <p>The two-method pattern (<code>setNeedsLayout</code> + <code>layoutIfNeeded</code>) exists precisely to separate <strong>invalidation</strong> from <strong>recomputation</strong>. Graph-based state management does the same thing: mark dirty, then recompute on access.</p>
+  <p>The two-method pattern (<code>setNeedsLayout</code> + <code>layoutIfNeeded</code>) exists precisely to separate <strong>invalidation</strong> from <strong>recomputation</strong>. Pull/lazy graph systems do the same thing: mark dirty, then recompute on access.</p>
 
   <p>This is also why SwiftUI doesn't immediately re-render a view when <code>@State</code> changes. It marks the view's body as "potentially dirty" and batches the re-evaluation into the next render pass — exactly like <code>setNeedsLayout</code>.</p>
 
@@ -352,7 +354,7 @@ view.layoutIfNeeded()   // = "recompute if dirty"
 
   <p><strong>Push (RxSwift / Combine / StateFlow)</strong> is like a <strong>waterfall</strong>. Values flow downward from upstream to downstream. When the source emits, the value cascades through the stream. You stand at the bottom and receive whatever falls. If the waterfall is too fast, you get overwhelmed (backpressure).</p>
 
-  <p><strong>Pull (AttributedGraph / Jotai / swift-state-graph)</strong> is like a <strong>bird's-eye view</strong>. You look down at the graph from above. You can see that something changed — a node is marked dirty — but you don't know the new value yet. You only compute it when you need it. Multiple changes can accumulate, and when you finally look, you see the latest state of everything at once.</p>
+  <p><strong>Pull (AttributedGraph / swift-state-graph / Compose derivedStateOf)</strong> is like a <strong>bird's-eye view</strong>. You look down at the graph from above. You can see that something changed — a node is marked dirty — but you don't know the new value yet. You only compute it when you need it. Multiple changes can accumulate, and when you finally look, you see the latest state of everything at once.</p>
 
   <p>Both can express the same data flow patterns (A + B = C). The difference is <strong>who drives the computation</strong>: the producer (push) or the consumer (pull).</p>
 

@@ -20,15 +20,15 @@ order: 5
 </thead>
 <tbody class="[&_tr:last-child]:border-0">
 <tr class="border-b transition-colors hover:bg-muted/50">
-<td class="p-4 align-middle font-medium text-foreground">Paradigm</td>
-<td class="p-4 align-middle text-muted-foreground">Push</td>
-<td class="p-4 align-middle text-muted-foreground">Push</td>
-<td class="p-4 align-middle text-muted-foreground">Push</td>
-<td class="p-4 align-middle text-muted-foreground">Push</td>
-<td class="p-4 align-middle text-muted-foreground">Push</td>
-<td class="p-4 align-middle text-muted-foreground">Pull</td>
-<td class="p-4 align-middle text-muted-foreground">Pull</td>
-<td class="p-4 align-middle text-muted-foreground">Pull (UI)</td>
+<td class="p-4 align-middle font-medium text-foreground">Pattern</td>
+<td class="p-4 align-middle text-muted-foreground">Store-centric</td>
+<td class="p-4 align-middle text-muted-foreground">Store-centric</td>
+<td class="p-4 align-middle text-muted-foreground">Atomic graph</td>
+<td class="p-4 align-middle text-muted-foreground">Store-centric</td>
+<td class="p-4 align-middle text-muted-foreground">Signals graph</td>
+<td class="p-4 align-middle text-muted-foreground">Atom graph</td>
+<td class="p-4 align-middle text-muted-foreground">DAG graph</td>
+<td class="p-4 align-middle text-muted-foreground">Compose graph</td>
 </tr>
 <tr class="border-b transition-colors hover:bg-muted/50">
 <td class="p-4 align-middle font-medium text-foreground">Graph</td>
@@ -36,7 +36,7 @@ order: 5
 <td class="p-4 align-middle text-muted-foreground">None</td>
 <td class="p-4 align-middle text-muted-foreground">Implicit auto</td>
 <td class="p-4 align-middle text-muted-foreground">None</td>
-<td class="p-4 align-middle text-muted-foreground">Explicit deps</td>
+<td class="p-4 align-middle text-muted-foreground">Implicit auto</td>
 <td class="p-4 align-middle text-muted-foreground">Implicit auto</td>
 <td class="p-4 align-middle text-muted-foreground">Implicit auto</td>
 <td class="p-4 align-middle text-muted-foreground">Implicit auto</td>
@@ -47,7 +47,7 @@ order: 5
 <td class="p-4 align-middle text-muted-foreground">Store + Reducer</td>
 <td class="p-4 align-middle text-muted-foreground">Atom types</td>
 <td class="p-4 align-middle text-muted-foreground">Single Store</td>
-<td class="p-4 align-middle text-muted-foreground">Store + Derived + Effect</td>
+<td class="p-4 align-middle text-muted-foreground">Store / Atom</td>
 <td class="p-4 align-middle text-muted-foreground">Atom</td>
 <td class="p-4 align-middle text-muted-foreground">Stored + Computed</td>
 <td class="p-4 align-middle text-muted-foreground">State + derivedStateOf</td>
@@ -58,7 +58,7 @@ order: 5
 <td class="p-4 align-middle text-muted-foreground">Computed in reducer</td>
 <td class="p-4 align-middle text-muted-foreground">ValueAtom (watch)</td>
 <td class="p-4 align-middle text-muted-foreground">Selector</td>
-<td class="p-4 align-middle text-muted-foreground">Derived class</td>
+<td class="p-4 align-middle text-muted-foreground">Derived store</td>
 <td class="p-4 align-middle text-muted-foreground">atom(get =&gt; ...)</td>
 <td class="p-4 align-middle text-muted-foreground">@GraphComputed</td>
 <td class="p-4 align-middle text-muted-foreground">derivedStateOf {}</td>
@@ -69,21 +69,21 @@ order: 5
 <td class="p-4 align-middle text-muted-foreground">Manual</td>
 <td class="p-4 align-middle text-muted-foreground">Auto (watch())</td>
 <td class="p-4 align-middle text-muted-foreground">Selector equality</td>
-<td class="p-4 align-middle text-muted-foreground">Explicit deps array</td>
+<td class="p-4 align-middle text-muted-foreground">Auto (state reads)</td>
 <td class="p-4 align-middle text-muted-foreground">Auto (get())</td>
 <td class="p-4 align-middle text-muted-foreground">Auto (ThreadLocal)</td>
 <td class="p-4 align-middle text-muted-foreground">Auto (Snapshot)</td>
 </tr>
 <tr class="border-b transition-colors hover:bg-muted/50">
 <td class="p-4 align-middle font-medium text-foreground">Evaluation</td>
-<td class="p-4 align-middle text-muted-foreground">Eager (push)</td>
-<td class="p-4 align-middle text-muted-foreground">Eager (push)</td>
-<td class="p-4 align-middle text-muted-foreground">Eager (topological)</td>
-<td class="p-4 align-middle text-muted-foreground">Eager (notify all)</td>
-<td class="p-4 align-middle text-muted-foreground">Lazy (on access)</td>
-<td class="p-4 align-middle text-muted-foreground">On-demand</td>
+<td class="p-4 align-middle text-muted-foreground">Cached emit</td>
+<td class="p-4 align-middle text-muted-foreground">Action-driven</td>
+<td class="p-4 align-middle text-muted-foreground">Watched + topo</td>
+<td class="p-4 align-middle text-muted-foreground">Eager notify</td>
+<td class="p-4 align-middle text-muted-foreground">Lazy dirty-check</td>
+<td class="p-4 align-middle text-muted-foreground">Mounted graph updates</td>
 <td class="p-4 align-middle text-muted-foreground">Lazy invalidation</td>
-<td class="p-4 align-middle text-muted-foreground">Conditional</td>
+<td class="p-4 align-middle text-muted-foreground">Value-filtered</td>
 </tr>
 <tr class="border-b transition-colors hover:bg-muted/50">
 <td class="p-4 align-middle font-medium text-foreground">Composition</td>

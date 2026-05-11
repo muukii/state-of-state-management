@@ -1,0 +1,123 @@
+---
+import DocsLayout from '../layouts/DocsLayout.astro';
+import { Code } from 'astro:components';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const storeExample = `// Store-centric: state is gathered behind one feature boundary
+type State = {
+  count: number;
+  user: User | null;
+};
+
+const store = createStore<State>({
+  count: 0,
+  user: null,
+});
+
+const doubled = store.select((state) => state.count * 2);`;
+
+const atomicExample = `// Atomic / Graph-centric: state is split into composable nodes
+const countAtom = atom(0);
+const userAtom = atom<User | null>(null);
+
+const doubledAtom = atom((get) => {
+  return get(countAtom) * 2;
+});`;
+
+const secondaryAxisCode = `// Evaluation model is a lower-level axis
+store.setState({ count: 1 });      // notify subscribers
+
+const value = doubledAtom.read();  // read / recompute if needed`;
+---
+
+<DocsLayout title="Store vs Atomic" currentPath={`${base}/store-vs-atomic/`}>
+  <h1>Store-centric vs Atomic / Graph-centric</h1>
+  <p class="text-lg text-muted-foreground !mt-2">
+    The primary design split is where state is organized: around feature stores, or around small composable nodes.
+  </p>
+
+  <hr />
+
+  <h2>Store-centric</h2>
+
+  <p>Store-centric systems organize state behind a feature or application boundary. A store, reducer, ViewModel, or BLoC owns a coherent slice of state and exposes actions, selectors, or derived values around that boundary.</p>
+
+  <p><strong>Representatives:</strong> Redux, Zustand, TCA, Verge, Provider, BLoC, ViewModel + StateFlow</p>
+
+  <p>The mental model: <em>"This feature owns this state shape."</em></p>
+
+  <Code code={storeExample} lang="typescript" />
+
+  <h3>Characteristics</h3>
+  <ul>
+    <li>State is grouped around features, screens, reducers, or view models</li>
+    <li>Mutations are usually explicit: actions, commits, events, or setter functions</li>
+    <li>Derived state is usually expressed with selectors, computed properties, pipelines, or <code>combine()</code></li>
+    <li>The dependency structure is mostly designed by the developer</li>
+  </ul>
+
+  <hr />
+
+  <h2>Atomic / Graph-centric</h2>
+
+  <p>Atomic and graph-centric systems organize state as small units that compose into other units. The runtime captures dependencies while derived values are evaluated, then uses that graph to invalidate, rebuild, or notify only the affected readers.</p>
+
+  <p><strong>Representatives:</strong> Jotai, Atoms, Riverpod, swift-state-graph, ReactiveState-Kotlin, Compose <code>derivedStateOf</code>, Signals, TanStack Store</p>
+
+  <p>The mental model: <em>"This value depends on those values."</em></p>
+
+  <Code code={atomicExample} lang="typescript" />
+
+  <h3>Characteristics</h3>
+  <ul>
+    <li>State is split into atoms, providers, signals, nodes, or derived stores</li>
+    <li>Derived state is a first-class primitive, not only a selector at the edge</li>
+    <li>Dependencies are discovered from reads such as <code>get()</code>, <code>watch()</code>, <code>ref.watch()</code>, <code>.state</code>, or Snapshot reads</li>
+    <li>The runtime owns more of the dependency graph and invalidation behavior</li>
+  </ul>
+
+  <hr />
+
+  <h2>Why Push / Pull Moves Down</h2>
+
+  <p>Push and pull are still useful, but they describe the lower-level evaluation model rather than the architectural family. A store-centric system can have fine-grained selectors. An atomic system can still notify mounted subscribers. Signals are often push-pull hybrids.</p>
+
+  <Code code={secondaryAxisCode} lang="typescript" />
+
+  <p>The better first question is not "who pushes or pulls?" It is: <strong>does the app model state as feature-owned stores, or as composable dependency nodes?</strong></p>
+
+  <div class="not-prose my-6 w-full overflow-auto rounded-lg border border-border bg-card">
+    <table class="w-full min-w-[640px] caption-bottom text-sm">
+      <thead class="[&_tr]:border-b">
+        <tr class="border-b transition-colors">
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Axis</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Store-centric</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Atomic / Graph-centric</th>
+        </tr>
+      </thead>
+      <tbody class="[&_tr:last-child]:border-0">
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Primary unit</td>
+          <td class="p-4 align-middle text-muted-foreground">Store, reducer, ViewModel, BLoC</td>
+          <td class="p-4 align-middle text-muted-foreground">Atom, provider, signal, node</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Derived state</td>
+          <td class="p-4 align-middle text-muted-foreground">Selector, computed property, pipeline, combine</td>
+          <td class="p-4 align-middle text-muted-foreground">First-class derived node</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Dependency tracking</td>
+          <td class="p-4 align-middle text-muted-foreground">Manual or explicit</td>
+          <td class="p-4 align-middle text-muted-foreground">Often automatic from reads</td>
+        </tr>
+        <tr class="transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Best fit</td>
+          <td class="p-4 align-middle text-muted-foreground">Feature boundaries, action logs, structured workflows</td>
+          <td class="p-4 align-middle text-muted-foreground">Fine-grained derived state, dynamic dependencies</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</DocsLayout>

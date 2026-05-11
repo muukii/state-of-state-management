@@ -3,10 +3,10 @@ title: "Relationship with Signals"
 order: 7
 ---
 
-**Signals** — gaining adoption in Angular (v16+), SolidJS, Vue 3 (ref/computed), and the TC39 standardization proposal — are fundamentally a **pull-based, graph-tracked** approach:
+**Signals** — gaining adoption in Angular (v16+), SolidJS, Vue 3 (ref/computed), and the TC39 standardization proposal — are fundamentally a **fine-grained graph** approach:
 
 - **Fine-grained change detection**: Changes propagate only to the affected scope
-- **Lazy evaluation**: Recalculation happens only when the value is read
+- **Cached derived values**: Recalculation can be skipped when dependencies or results are unchanged
 - **Automatic dependency tracking**: Reading a value registers the dependency
 
-Jotai and swift-state-graph share this lineage. TanStack Store shares the fine-grained update goal but uses explicit rather than implicit tracking. Push-based libraries like Verge and TCA take a different path entirely — they optimize within the push model using techniques like `@Tracking` and reducer composition.
+Jotai, swift-state-graph, Atoms, Riverpod, and TanStack Store all share part of this lineage: small values compose into derived values, and dependencies are captured by reads. Store-centric libraries like Verge and TCA take a different path — they optimize within feature-owned stores using techniques like `@Tracking`, reducers, and explicit derived pipelines.
