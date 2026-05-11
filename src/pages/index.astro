@@ -60,17 +60,17 @@ graph TD
       </CardHeader>
       <CardContent className="p-6 pt-0">
         <Mermaid chart={`
-graph TD
+graph BT
   Count["count atom"]
   User["user provider"]
   Doubled["doubled derived"]
   Greeting["greeting derived"]
   ViewA["View A"]
   ViewB["View B"]
-  Count --> Doubled
-  User --> Greeting
-  Doubled --> ViewA
-  Greeting --> ViewB
+  ViewA --> Doubled
+  ViewB --> Greeting
+  Doubled --> Count
+  Greeting --> User
 `} />
       </CardContent>
     </Card>
