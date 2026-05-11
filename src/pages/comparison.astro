@@ -72,11 +72,15 @@ const doubledAtom = atom((get) => get(countAtom) * 2);
 // dependency on countAtom registered via get()`;
 
 const ssgDoubledCode = `// swift-state-graph — DAG-based graph
-struct MyGraph {
-  @Stored var count: Int = 0
+final class MyGraph: GraphObject {
+  @GraphStored var count: Int = 0
 
-  @Computed var doubled: Int {
-    count * 2  // auto-tracked via ThreadLocal
+  @GraphComputed var doubled: Int
+
+  init() {
+    $doubled = .init { [$count] _ in
+      $count.wrappedValue * 2
+    }
   }
 }`;
 
@@ -106,6 +110,46 @@ final doubledProvider = Provider((ref) {
   <p class="text-lg text-muted-foreground !mt-2">
     Side-by-side comparison of all surveyed libraries across key dimensions.
   </p>
+
+  <hr />
+
+  <h2>Two-Axis Labels</h2>
+
+  <p>Each library can be labeled along two independent axes: how it organizes state, and what its change notification carries.</p>
+
+  <div class="not-prose my-6 w-full overflow-auto rounded-lg border border-border bg-card">
+    <table class="w-full min-w-[760px] caption-bottom text-sm">
+      <thead class="[&_tr]:border-b">
+        <tr class="border-b transition-colors">
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Quadrant</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Libraries</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Label</th>
+        </tr>
+      </thead>
+      <tbody class="[&_tr:last-child]:border-0">
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Store + Value-push</td>
+          <td class="p-4 align-middle text-muted-foreground">Verge, Zustand, StateFlow, BLoC / Cubit</td>
+          <td class="p-4 align-middle text-muted-foreground">A feature store emits the new state, selected value, or stream value to listeners.</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Store + Invalidation/read</td>
+          <td class="p-4 align-middle text-muted-foreground">Redux, TCA with Observation, Provider / ChangeNotifier</td>
+          <td class="p-4 align-middle text-muted-foreground">The store or object notifies that something changed; consumers read the current value.</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Atomic + Value-push</td>
+          <td class="p-4 align-middle text-muted-foreground">Riverpod, Atoms, ReactiveState-Kotlin</td>
+          <td class="p-4 align-middle text-muted-foreground">Graph dependencies are tracked, and mounted watchers/listeners receive changed values.</td>
+        </tr>
+        <tr class="transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Atomic + Invalidation/read</td>
+          <td class="p-4 align-middle text-muted-foreground">swift-state-graph, Compose <code>derivedStateOf</code>, Jotai core, TanStack Store derived values</td>
+          <td class="p-4 align-middle text-muted-foreground">Changes invalidate or dirty the graph; derived values are read or recomputed when needed.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
   <hr />
 
@@ -141,6 +185,18 @@ final doubledProvider = Provider((ref) {
           <td class="p-4 align-middle text-muted-foreground">Compose graph</td>
         </tr>
         <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground bg-card">Notification</td>
+          <td class="p-4 align-middle text-muted-foreground">Value-push</td>
+          <td class="p-4 align-middle text-muted-foreground">Invalidation/read</td>
+          <td class="p-4 align-middle text-muted-foreground">Value-push graph</td>
+          <td class="p-4 align-middle text-muted-foreground">Value-push graph</td>
+          <td class="p-4 align-middle text-muted-foreground">Value-push</td>
+          <td class="p-4 align-middle text-muted-foreground">Hybrid pull-derived</td>
+          <td class="p-4 align-middle text-muted-foreground">Invalidation/read</td>
+          <td class="p-4 align-middle text-muted-foreground">Invalidation/read</td>
+          <td class="p-4 align-middle text-muted-foreground">Invalidation/read</td>
+        </tr>
+        <tr class="border-b transition-colors hover:bg-muted/50">
           <td class="p-4 align-middle font-medium text-foreground bg-card">Graph</td>
           <td class="p-4 align-middle text-muted-foreground">Explicit</td>
           <td class="p-4 align-middle text-muted-foreground">None</td>
@@ -173,7 +229,7 @@ final doubledProvider = Provider((ref) {
           <td class="p-4 align-middle text-muted-foreground">Selector function</td>
           <td class="p-4 align-middle text-muted-foreground">Derived store</td>
           <td class="p-4 align-middle text-muted-foreground">Derived atom</td>
-          <td class="p-4 align-middle text-muted-foreground">@Computed node</td>
+          <td class="p-4 align-middle text-muted-foreground">@GraphComputed node</td>
           <td class="p-4 align-middle text-muted-foreground">derivedStateOf block</td>
         </tr>
         <tr class="border-b transition-colors hover:bg-muted/50">
@@ -190,15 +246,15 @@ final doubledProvider = Provider((ref) {
         </tr>
         <tr class="border-b transition-colors hover:bg-muted/50">
           <td class="p-4 align-middle font-medium text-foreground bg-card">Evaluation</td>
-          <td class="p-4 align-middle text-muted-foreground">Cached emit</td>
-          <td class="p-4 align-middle text-muted-foreground">Action-driven</td>
-          <td class="p-4 align-middle text-muted-foreground">Watched + topo</td>
+          <td class="p-4 align-middle text-muted-foreground">Cached derived emit</td>
+          <td class="p-4 align-middle text-muted-foreground">Action + observed reads</td>
+          <td class="p-4 align-middle text-muted-foreground">Watched propagation</td>
           <td class="p-4 align-middle text-muted-foreground">Rebuild + value filter</td>
-          <td class="p-4 align-middle text-muted-foreground">Eager notify</td>
-          <td class="p-4 align-middle text-muted-foreground">Lazy dirty-check</td>
-          <td class="p-4 align-middle text-muted-foreground">Mounted graph updates</td>
-          <td class="p-4 align-middle text-muted-foreground">Lazy</td>
-          <td class="p-4 align-middle text-muted-foreground">Value-filtered</td>
+          <td class="p-4 align-middle text-muted-foreground">Synchronous notify</td>
+          <td class="p-4 align-middle text-muted-foreground">Lazy derived check</td>
+          <td class="p-4 align-middle text-muted-foreground">Mounted invalidation</td>
+          <td class="p-4 align-middle text-muted-foreground">Lazy dirty read</td>
+          <td class="p-4 align-middle text-muted-foreground">Observed state filter</td>
         </tr>
         <tr class="border-b transition-colors hover:bg-muted/50">
           <td class="p-4 align-middle font-medium text-foreground bg-card">Composition</td>
@@ -298,6 +354,7 @@ final doubledProvider = Provider((ref) {
     <li><a href="https://github.com/pointfreeco/swift-composable-architecture">TCA</a> &mdash; Point-Free</li>
     <li><a href="https://github.com/ra1028/swiftui-atom-properties">Atoms</a> &mdash; ra1028</li>
     <li><a href="https://github.com/pmndrs/zustand">Zustand</a> &mdash; pmndrs</li>
+    <li><a href="https://redux.js.org/faq/store-setup/#how-do-i-subscribe-to-only-a-portion-of-the-state-can-i-get-the-dispatched-action-as-part-of-the-subscription">Redux Store subscriptions</a></li>
     <li><a href="https://github.com/TanStack/store">TanStack Store</a> &mdash; TanStack</li>
     <li><a href="https://github.com/pmndrs/jotai">Jotai</a> &mdash; pmndrs</li>
     <li><a href="https://github.com/VergeGroup/swift-state-graph">swift-state-graph</a> &mdash; VergeGroup</li>

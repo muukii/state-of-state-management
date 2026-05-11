@@ -75,22 +75,29 @@ struct CounterView: View {
   }
 }`;
 
-const ssgExample = `import StateGraph
+const ssgExample = `import SwiftUI
+import StateGraph
 
-struct AppGraph {
-  @Stored var count: Int = 0
+final class AppGraph: GraphObject {
+  @GraphStored var count: Int = 0
 
-  @Computed var doubled: Int {
-    count * 2  // auto-tracked
-  }
+  @GraphComputed var doubled: Int
 
-  @Computed var label: String {
-    "Value: \\(doubled)"  // transitive dependency
+  @GraphComputed var label: String
+
+  init() {
+    $doubled = .init { [$count] _ in
+      $count.wrappedValue * 2
+    }
+
+    $label = .init { [$doubled] _ in
+      "Value: \\($doubled.wrappedValue)"
+    }
   }
 }
 
 struct ContentView: View {
-  @GraphState var graph = AppGraph()
+  @State private var graph = AppGraph()
 
   var body: some View {
     VStack {
@@ -216,7 +223,7 @@ class ViewModel: ObservableObject {
 
   <p><strong>Pattern:</strong> DAG-based graph &nbsp;|&nbsp; <strong>Status:</strong> Newest entrant</p>
 
-  <p>swift-state-graph is the newest iOS state management library, bringing a pull/lazy graph approach to Swift. It models state as a directed acyclic graph with <code>Stored</code> and <code>Computed</code> nodes, using ThreadLocal-based auto-tracking and lazy invalidation.</p>
+  <p>swift-state-graph is the newest iOS state management library, bringing a pull/lazy graph approach to Swift. Its current public API models state with <code>@GraphStored</code> and <code>@GraphComputed</code> properties on a <code>GraphObject</code>, using ThreadLocal-based tracking and lazy invalidation.</p>
 
   <Code code={ssgExample} lang="swift" />
 
@@ -224,7 +231,7 @@ class ViewModel: ObservableObject {
   <ul>
     <li>Lazy invalidation for consistent graph reads</li>
     <li>ThreadLocal auto-tracking for dependency discovery</li>
-    <li>Swift macros (<code>@Stored</code>, <code>@Computed</code>)</li>
+    <li>Swift macros (<code>@GraphStored</code>, <code>@GraphComputed</code>)</li>
     <li>Per-node locking for thread safety</li>
     <li>Extensible <code>Storage</code> protocol</li>
     <li>Both SwiftUI and UIKit support</li>

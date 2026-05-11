@@ -1,0 +1,171 @@
+---
+import DocsLayout from '../layouts/DocsLayout.astro';
+import Mermaid from '../components/Mermaid.astro';
+import { Code } from 'astro:components';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const valuePushCode = `// Value-push:
+// The box sends the next value as part of the notification.
+const unsubscribe = box.subscribe((nextValue) => {
+  render(nextValue);
+});
+
+box.set(1); // listener receives 1
+box.set(2); // listener receives 2`;
+
+const invalidationReadCode = `// Invalidation + read:
+// The box only says "something changed".
+const unsubscribe = box.subscribe(() => {
+  const nextValue = box.getSnapshot();
+  render(nextValue);
+});
+
+box.set(1); // listener wakes up, then reads
+box.set(2); // listener wakes up, then reads`;
+
+const lazyGraphCode = `// Lazy graph:
+// A source write marks dependents dirty, but derived values
+// are recomputed only when someone reads them.
+count.set(2);
+
+// No derived computation yet.
+
+const doubled = doubledNode.read(); // recomputes now if dirty`;
+---
+
+<DocsLayout title="Push vs Pull" currentPath={`${base}/push-vs-pull/`}>
+  <h1>Push vs Pull</h1>
+  <p class="text-lg text-muted-foreground !mt-2">
+    A cross-cutting axis: whether change notifications carry values, or only invalidate readers.
+  </p>
+
+  <p>
+    In this report, <strong>Store vs Atomic</strong> describes how state is organized. <strong>Push vs Pull</strong> describes how a changed value is delivered or re-read. These axes are independent.
+  </p>
+
+  <hr />
+
+  <h2>The Core Difference</h2>
+
+  <p>The most useful distinction is what the notification carries:</p>
+
+  <div class="not-prose my-6 w-full overflow-auto rounded-lg border border-border bg-card">
+    <table class="w-full min-w-[680px] caption-bottom text-sm">
+      <thead class="[&_tr]:border-b">
+        <tr class="border-b transition-colors">
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Model</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Notification carries</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Consumer does</th>
+        </tr>
+      </thead>
+      <tbody class="[&_tr:last-child]:border-0">
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Push / value-push</td>
+          <td class="p-4 align-middle text-muted-foreground">The next value, selected value, or emitted event</td>
+          <td class="p-4 align-middle text-muted-foreground">Uses the value it was handed</td>
+        </tr>
+        <tr class="transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Pull / invalidation + read</td>
+          <td class="p-4 align-middle text-muted-foreground">A wake-up signal, dirty mark, or "changed" notification</td>
+          <td class="p-4 align-middle text-muted-foreground">Reads the current value or recomputes on demand</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr />
+
+  <h2>Value-push</h2>
+
+  <p>In a value-push model, the box that owns the value sends the new value to subscribers. The subscriber does not need to ask the box for the current snapshot; it receives the value directly.</p>
+
+  <Code code={valuePushCode} lang="typescript" />
+
+  <div class="not-prose my-6 overflow-hidden rounded-lg border border-border bg-card p-6">
+    <Mermaid chart={`
+graph LR
+  Box["Box changes"]
+  Notify["notify(nextValue)"]
+  Consumer["Consumer"]
+  Box --> Notify --> Consumer
+`} />
+  </div>
+
+  <p>This is the shape of streams, event emitters, many observable APIs, and store subscriptions that pass the current state or selected slice to the listener.</p>
+
+  <hr />
+
+  <h2>Invalidation + Read</h2>
+
+  <p>In an invalidation/read model, the notification does not carry the value. It only tells the consumer that its cached view of the world may be stale. The consumer then reads the current value, or the runtime recomputes a derived value when it is accessed.</p>
+
+  <Code code={invalidationReadCode} lang="typescript" />
+
+  <div class="not-prose my-6 overflow-hidden rounded-lg border border-border bg-card p-6">
+    <Mermaid chart={`
+graph LR
+  Box["Box changes"]
+  Dirty["mark dirty / notify"]
+  Consumer["Consumer"]
+  Read["read current value"]
+  Box --> Dirty --> Consumer --> Read
+`} />
+  </div>
+
+  <p>This shape is common when the latest value should be read at the moment it is needed. It also supports batching: many changes can happen before the consumer reads, and only the latest value has to matter.</p>
+
+  <hr />
+
+  <h2>Lazy Graphs</h2>
+
+  <p>Graph systems often add another step: a source change marks derived nodes dirty, but derived values are not immediately recomputed. The next read decides whether recomputation is necessary.</p>
+
+  <Code code={lazyGraphCode} lang="typescript" />
+
+  <p>This is why many systems are hybrids. A write may push invalidation through the graph, while the actual value is pulled from a cache or recomputed later.</p>
+
+  <hr />
+
+  <h2>How This Crosses Store / Atomic</h2>
+
+  <div class="not-prose my-6 w-full overflow-auto rounded-lg border border-border bg-card">
+    <table class="w-full min-w-[760px] caption-bottom text-sm">
+      <thead class="[&_tr]:border-b">
+        <tr class="border-b transition-colors">
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Organization</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Value-push</th>
+          <th class="h-10 px-4 text-left align-middle font-medium text-muted-foreground">Invalidation + read</th>
+        </tr>
+      </thead>
+      <tbody class="[&_tr:last-child]:border-0">
+        <tr class="border-b transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Store-centric</td>
+          <td class="p-4 align-middle text-muted-foreground">Store emits state or selector output</td>
+          <td class="p-4 align-middle text-muted-foreground">Store/object notifies; consumer reads current state</td>
+        </tr>
+        <tr class="transition-colors hover:bg-muted/50">
+          <td class="p-4 align-middle font-medium text-foreground">Atomic / Graph-centric</td>
+          <td class="p-4 align-middle text-muted-foreground">Atom/provider graph pushes updated values to mounted watchers</td>
+          <td class="p-4 align-middle text-muted-foreground">Graph dirty-marks nodes; derived values are pulled on read</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The practical reading is: <strong>do not use push/pull as the top-level family name.</strong> Use it to describe a library's delivery mechanics after identifying whether its state model is store-centric or atomic/graph-centric.</p>
+
+  <hr />
+
+  <h2>Concrete Anchors</h2>
+
+  <ul>
+    <li><strong>Redux:</strong> <code>store.subscribe(listener)</code> is an invalidation-style primitive; the listener is called after an update and reads with <code>getState()</code>.</li>
+    <li><strong>Zustand:</strong> subscriptions can receive current state or selected slices, making it a store-centric value-push model at the subscription boundary.</li>
+    <li><strong>Jotai:</strong> atom reads track dependencies, while listener callbacks wake consumers that then read the atom value.</li>
+    <li><strong>Riverpod:</strong> <code>ref.watch</code> builds provider dependencies, and <code>ref.listen</code> receives previous/next values for side effects.</li>
+    <li><strong>Compose <code>derivedStateOf</code>:</strong> creates observable derived state that updates only as much as needed, closer to invalidation/read than eager value-push.</li>
+  </ul>
+
+  <p>See also: <a href={`${base}/comparison/`}>Comparison</a>.</p>
+</DocsLayout>

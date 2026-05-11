@@ -114,25 +114,30 @@ const uppercaseNameAtom = atom(
 
 const ssgDefinitionCode = `import StateGraph
 
-struct AppGraph {
+final class AppGraph: GraphObject {
   // Stored — writable source of truth
-  @Stored var count: Int = 0
-  @Stored var name: String = "Alice"
+  @GraphStored var count: Int = 0
+  @GraphStored var name: String = "Alice"
 
   // Computed — pull-based derived state
-  @Computed var doubled: Int {
-    count * 2  // dependency on 'count' auto-tracked
-  }
+  @GraphComputed var doubled: Int
 
-  @Computed var greeting: String {
-    "Hello, \\(name)! (\\(doubled))"
-    // depends on 'name' and 'doubled' (transitive: 'count')
+  @GraphComputed var greeting: String
+
+  init() {
+    $doubled = .init { [$count] _ in
+      $count.wrappedValue * 2
+    }
+
+    $greeting = .init { [$name, $doubled] _ in
+      "Hello, \\($name.wrappedValue)! (\\($doubled.wrappedValue))"
+    }
   }
 }`;
 
 const ssgTrackingCode = `// ThreadLocal-based auto-tracking
-// When a Computed node evaluates, it sets a ThreadLocal flag.
-// Any Stored/Computed node read during evaluation
+// When a GraphComputed node evaluates, it sets a ThreadLocal flag.
+// Any GraphStored/GraphComputed property read during evaluation
 // registers itself as a dependency automatically.
 //
 // This is the same mechanism as:
@@ -140,8 +145,10 @@ const ssgTrackingCode = `// ThreadLocal-based auto-tracking
 //   - Vue 3's reactive() tracking
 //   - Compose's Snapshot read observation`;
 
-const ssgSwiftUICode = `struct CounterView: View {
-  @GraphState var graph = AppGraph()
+const ssgSwiftUICode = `import SwiftUI
+
+struct CounterView: View {
+  @State private var graph = AppGraph()
 
   var body: some View {
     VStack {
@@ -359,7 +366,7 @@ class CounterModel {
 
   <p><strong>Platform:</strong> Swift 6.0+ (SwiftUI &amp; UIKit) &nbsp;|&nbsp; <strong>Pattern:</strong> DAG-based graph</p>
 
-  <p>swift-state-graph models state as a <strong>directed acyclic graph (DAG)</strong>. It uses <code>Stored</code> nodes for source state and <code>Computed</code> nodes for derived state, with ThreadLocal-based auto-tracking for dependency discovery and lazy invalidation for reads.</p>
+  <p>swift-state-graph models state as a <strong>directed acyclic graph (DAG)</strong>. Its current public API uses <code>@GraphStored</code> properties for source state and <code>@GraphComputed</code> properties for derived state on a <code>GraphObject</code>, with ThreadLocal-based tracking for dependency discovery and lazy invalidation for reads.</p>
 
   <h3>Graph Definition</h3>
   <Code code={ssgDefinitionCode} lang="swift" />
@@ -376,7 +383,7 @@ class CounterModel {
   <Code code={ssgLazyCode} lang="swift" />
 
   <h3>Swift Macros</h3>
-  <p>The library leverages Swift macros (<code>@Stored</code>, <code>@Computed</code>) to reduce boilerplate. The macros generate the underlying node infrastructure, storage accessors, and dependency-tracking wrappers.</p>
+  <p>The library leverages Swift macros (<code>@GraphStored</code>, <code>@GraphComputed</code>) to reduce boilerplate. The macros generate the underlying node infrastructure, storage accessors, and dependency-tracking wrappers.</p>
 
   <h3>Storage Protocol</h3>
   <p>The <code>Storage</code> protocol allows pluggable persistence backends:</p>

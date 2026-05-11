@@ -355,12 +355,17 @@ Employs a **lazy invalidation pattern**:
 #### Macros for Code Generation
 
 ```swift
-@GraphStored var count: Int = 0
-// ↑ The macro auto-expands hidden $backing storage and get/set accessors
+final class CounterGraph: GraphObject {
+  @GraphStored var count: Int = 0
+  // ↑ The macro auto-expands hidden $backing storage and get/set accessors
 
-@GraphComputed var doubled: Int
-$doubled = .init { [$count] _ in
-  $count.wrappedValue * 2
+  @GraphComputed var doubled: Int
+
+  init() {
+    $doubled = .init { [$count] _ in
+      $count.wrappedValue * 2
+    }
+  }
 }
 ```
 

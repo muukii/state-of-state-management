@@ -8,6 +8,6 @@ In frontend and mobile development, the question of **how to manage state** cont
 1. **Store-centric** — state is organized around feature stores, reducers, ViewModels, or BLoCs
 2. **Atomic / Graph-centric** — state is organized as composable atoms, providers, signals, or graph nodes
 
-Push and pull still describe the **evaluation model**, but they are a secondary axis. The higher-level design question is whether the app models state as feature-owned stores or as a dependency graph of small values.
+Push and pull still matter, but they form a secondary axis: **does a notification carry the next value, or does it only invalidate so consumers read later?** The higher-level design question is whether the app models state as feature-owned stores or as a dependency graph of small values.
 
 This report compares the design philosophies, internal architectures, and code styles of major libraries across Web, iOS, and Android.

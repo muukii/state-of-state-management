@@ -1,0 +1,20 @@
+---
+title: "Push vs Pull"
+order: 2.5
+---
+
+Push and pull are a second axis, independent from Store vs Atomic.
+
+The key question is what a change notification carries:
+
+- **Value-push**: the notification carries the next value, selected value, or emitted event.
+- **Invalidation + read**: the notification only says "something changed"; the consumer reads the current value or recomputes later.
+
+This distinction cuts across both state organization styles:
+
+| Organization | Value-push | Invalidation + read |
+| --- | --- | --- |
+| Store-centric | Store emits state or selector output | Store/object notifies; consumer reads current state |
+| Atomic / Graph-centric | Atom/provider graph pushes values to mounted watchers | Graph dirty-marks nodes; derived values are pulled on read |
+
+Many systems are hybrids. A signal-style graph may push invalidation through the graph, then pull a cached value when it is read.

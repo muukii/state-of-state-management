@@ -28,7 +28,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     <li><strong>Atomic / Graph-centric</strong> — state is organized as composable atoms, providers, signals, or graph nodes</li>
   </ol>
 
-  <p>Push and pull still matter, but they are a lower-level evaluation detail. The more useful first question is <strong>where the state model lives</strong>: in a store boundary, or in a graph of small derived nodes.</p>
+  <p><a href={`${base}/push-vs-pull/`}>Push and pull</a> still matter, but they form a second axis: <strong>does a notification carry the next value, or does it only invalidate so consumers read later?</strong> The first question is where the state model lives: in a store boundary, or in a graph of small derived nodes.</p>
 
   <div class="not-prose mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
     <Card className="gap-0 rounded-lg border border-border py-0 shadow-none ring-0">

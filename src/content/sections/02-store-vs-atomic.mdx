@@ -21,12 +21,15 @@ Atomic and graph-centric systems organize state as small units that compose into
 - Dependencies are often captured from reads: `get()`, `watch()`, `ref.watch()`, `.state`, Snapshot reads
 - Representatives: **Jotai**, **Atoms**, **Riverpod**, **swift-state-graph**, **TanStack Store**, Signals, Compose `derivedStateOf`
 
-### Why push/pull is secondary
+### The second axis: value-push vs invalidation + read
 
-Push and pull describe how values are evaluated or delivered. They matter, but they are not the best top-level taxonomy:
+Push and pull describe how values are delivered or re-read. They matter, but they are not the best top-level taxonomy:
 
 - A store-centric system can still have fine-grained selectors.
 - An atomic system can still notify mounted subscribers.
 - Signals-style systems are often push-pull hybrids.
 
-The first design question is: **does the application model state as feature-owned stores, or as composable dependency nodes?**
+The better model is a matrix:
+
+- **Store vs Atomic**: where state is organized
+- **Value-push vs Invalidation + read**: whether notifications carry the next value or only mark readers dirty
