@@ -9,14 +9,14 @@ interface Props {
 const { chart, class: className = '' } = Astro.props;
 
 const svg = renderMermaidSVG(chart.trim(), {
-  bg: 'hsl(var(--background))',
-  fg: 'hsl(var(--foreground))',
-  line: 'hsl(var(--muted-foreground))',
-  accent: 'hsl(var(--foreground))',
-  muted: 'hsl(var(--muted-foreground))',
-  surface: 'hsl(var(--muted))',
-  border: 'hsl(var(--border))',
-  font: 'JetBrains Mono, ui-monospace, monospace',
+  bg: 'var(--diagram-bg)',
+  fg: 'var(--diagram-fg)',
+  line: 'var(--diagram-line)',
+  accent: 'var(--diagram-accent)',
+  muted: 'var(--diagram-muted)',
+  surface: 'var(--diagram-surface)',
+  border: 'var(--diagram-border)',
+  font: 'Geist Variable',
   transparent: true,
 });
 ---
@@ -24,10 +24,44 @@ const svg = renderMermaidSVG(chart.trim(), {
 <div class:list={['mermaid-diagram overflow-hidden rounded-md bg-muted p-4', className]} set:html={svg} />
 
 <style>
+  .mermaid-diagram {
+    --diagram-bg: var(--card);
+    --diagram-fg: var(--foreground);
+    --diagram-line: color-mix(in oklch, var(--foreground) 28%, transparent);
+    --diagram-accent: color-mix(in oklch, var(--foreground) 64%, var(--background));
+    --diagram-muted: var(--muted-foreground);
+    --diagram-surface: color-mix(in oklch, var(--card) 92%, var(--foreground));
+    --diagram-border: color-mix(in oklch, var(--foreground) 14%, transparent);
+    background:
+      radial-gradient(circle at 50% 0%, color-mix(in oklch, var(--muted) 55%, transparent), transparent 52%),
+      color-mix(in oklch, var(--muted) 36%, var(--card));
+  }
+
   .mermaid-diagram :global(svg) {
     max-width: 100%;
     height: auto;
     display: block;
     margin-inline: auto;
+    overflow: visible;
+  }
+
+  .mermaid-diagram :global(.node rect),
+  .mermaid-diagram :global(.edge-label rect) {
+    rx: 8;
+    ry: 8;
+  }
+
+  .mermaid-diagram :global(.edge) {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .mermaid-diagram :global(.edge-label rect) {
+    fill: color-mix(in oklch, var(--card) 82%, transparent);
+    stroke: color-mix(in oklch, var(--foreground) 10%, transparent);
+  }
+
+  .mermaid-diagram :global(text) {
+    letter-spacing: 0;
   }
 </style>

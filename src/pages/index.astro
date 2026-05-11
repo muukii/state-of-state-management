@@ -2,10 +2,7 @@
 import DocsLayout from '../layouts/DocsLayout.astro';
 import Badge from '../components/ui/Badge.astro';
 import Mermaid from '../components/Mermaid.astro';
-import Card from '../components/ui/Card.astro';
-import CardHeader from '../components/ui/CardHeader.astro';
-import CardTitle from '../components/ui/CardTitle.astro';
-import CardContent from '../components/ui/CardContent.astro';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
@@ -33,13 +30,13 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
   <p>Push and Pull describe the <strong>direction of data flow</strong>. Graph describes <strong>how derived state dependencies are managed</strong> — and it can appear in both push and pull architectures.</p>
 
   <div class="not-prose mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
-    <Card>
-      <CardHeader>
-        <CardTitle class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+    <Card className="gap-0 rounded-lg border border-border py-0 shadow-none ring-0">
+      <CardHeader className="p-6">
+        <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           Push-based
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6 pt-0">
         <Mermaid chart={`
 graph TD
   Store["🔄 Store"]
@@ -52,13 +49,13 @@ graph TD
 `} />
       </CardContent>
     </Card>
-    <Card>
-      <CardHeader>
-        <CardTitle class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+    <Card className="gap-0 rounded-lg border border-border py-0 shadow-none ring-0">
+      <CardHeader className="p-6">
+        <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           Pull-based
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6 pt-0">
         <Mermaid chart={`
 graph TD
   Count["count ●"]

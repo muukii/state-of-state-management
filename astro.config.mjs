@@ -1,11 +1,15 @@
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
-import tailwind from '@astrojs/tailwind';
+import react from '@astrojs/react';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   site: 'https://muukii.github.io',
   base: '/state-of-state-management',
-  integrations: [mdx(), tailwind()],
+  integrations: [mdx(), react()],
+  vite: {
+    plugins: [tailwindcss()],
+  },
   markdown: {
     shikiConfig: {
       theme: 'github-dark',
