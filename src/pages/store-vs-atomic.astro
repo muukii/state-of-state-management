@@ -41,7 +41,11 @@ count.set(1);
 doubled.read(); // recompute on demand if dirty`;
 ---
 
-<DocsLayout title="Store vs Atomic" currentPath={`${base}/store-vs-atomic/`}>
+<DocsLayout
+  title="Store vs Atomic"
+  description="Understand the primary state management split between Store-centric architectures and Atomic / Graph-centric dependency node systems."
+  currentPath={`${base}/store-vs-atomic/`}
+>
   <h1>Store-centric vs Atomic / Graph-centric</h1>
   <p class="text-lg text-muted-foreground !mt-2">
     The primary design split is where state is organized: around feature stores, or around small composable nodes.

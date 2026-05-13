@@ -177,7 +177,11 @@ view.layoutIfNeeded()   // = "recompute if dirty"
 // you'd get 3 layout passes instead of 1.`;
 ---
 
-<DocsLayout title="Dependency Graphs Are Everywhere" currentPath={`${base}/internals/`}>
+<DocsLayout
+  title="Dependency Graphs Are Everywhere"
+  description="A mental model for dependency graphs in state management, spreadsheets, UI layout, build systems, and lazy recomputation."
+  currentPath={`${base}/internals/`}
+>
   <h1>Dependency Graphs Are Everywhere</h1>
   <p class="text-lg text-muted-foreground !mt-2">
     The same stored-and-computed structure appears in spreadsheets, UI layout, build systems, and atomic state libraries.

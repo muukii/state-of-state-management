@@ -11,3 +11,4 @@ const buildDateLabel = new Intl.DateTimeFormat('en-US', {
 }).format(buildDate)
 
 export const lastUpdatedLabel = `Last updated ${buildDateLabel} JST`
+export const buildDateIso = buildDate.toISOString()

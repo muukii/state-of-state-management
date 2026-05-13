@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://muukii.github.io/state-of-state-management/sitemap-index.xml

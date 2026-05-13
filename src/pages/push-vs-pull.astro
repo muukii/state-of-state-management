@@ -34,7 +34,11 @@ count.set(2);
 const doubled = doubledNode.read(); // recomputes now if dirty`;
 ---
 
-<DocsLayout title="Push vs Pull" currentPath={`${base}/push-vs-pull/`}>
+<DocsLayout
+  title="Push vs Pull"
+  description="A practical explanation of push and pull state management: value-pushing notifications versus invalidation and read-on-demand."
+  currentPath={`${base}/push-vs-pull/`}
+>
   <h1>Push vs Pull</h1>
   <p class="text-lg text-muted-foreground !mt-2">
     A cross-cutting axis: whether change notifications carry values, or only invalidate readers.

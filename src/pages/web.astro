@@ -81,7 +81,11 @@ const doubled = new Signal.Computed(() => counter.get() * 2);
 // Framework-agnostic, language-level reactivity`;
 ---
 
-<DocsLayout title="Web Platform" currentPath={`${base}/web/`}>
+<DocsLayout
+  title="Web Platform"
+  description="State management architecture on the Web, comparing Zustand, Jotai, TanStack Store, Signals, selectors, and atom graphs."
+  currentPath={`${base}/web/`}
+>
   <h1>Web Platform</h1>
   <p class="text-lg text-muted-foreground !mt-2">
     State management in the React ecosystem and the emerging Signals standard.
