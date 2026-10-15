@@ -118,7 +118,7 @@ BlocBuilder<CounterBloc, int>(
   <p>The Flutter state management landscape has evolved through several phases:</p>
 
   <ol>
-    <li><strong>Provider (2019):</strong> A popular wrapper around <code>InheritedWidget</code>. Commonly paired with <code>ChangeNotifier</code> for push-style updates.</li>
+    <li><strong>Provider (2018):</strong> A popular wrapper around <code>InheritedWidget</code>, endorsed by the Flutter team in 2019. Commonly paired with <code>ChangeNotifier</code> for push-style updates.</li>
     <li><strong>BLoC (2018):</strong> Event-driven, stream-based pattern. Popular in enterprise Flutter apps.</li>
     <li><strong>GetX (2020):</strong> All-in-one solution with reactive state, routing, and DI. Controversial for mixing concerns.</li>
     <li><strong>Riverpod (2020):</strong> Created by the same author as Provider (Remi Rousselet), Riverpod removes <code>BuildContext</code> coupling and adds scoped, graph-like provider composition.</li>
@@ -178,7 +178,7 @@ BlocBuilder<CounterBloc, int>(
   <h3>Trade-offs</h3>
   <ul>
     <li><strong>Strengths:</strong> Auto-tracking via ref.watch(), rich provider type system, code generation support, ProviderScope for testing, widely used Flutter solution</li>
-    <li><strong>Weaknesses:</strong> Flutter-only, provider lifecycle and scope rules take time to learn, ProviderScope boilerplate, migration from Provider can be significant</li>
+    <li><strong>Weaknesses:</strong> Dart-only (the core <code>riverpod</code> package runs without Flutter), provider lifecycle and scope rules take time to learn, ProviderScope boilerplate, migration from Provider can be significant</li>
   </ul>
 
   <hr />
@@ -236,7 +236,7 @@ BlocBuilder<CounterBloc, int>(
         <tr class="transition-colors hover:bg-muted/50">
           <td class="p-4 align-middle font-medium text-foreground">Scope</td>
           <td class="p-4 align-middle text-muted-foreground">ProviderScope</td>
-          <td class="p-4 align-middle text-muted-foreground">AtomScope</td>
+          <td class="p-4 align-middle text-muted-foreground">AtomRoot / AtomScope</td>
           <td class="p-4 align-middle text-muted-foreground">Provider (React)</td>
         </tr>
       </tbody>

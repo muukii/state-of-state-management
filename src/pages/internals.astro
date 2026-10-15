@@ -356,7 +356,7 @@ view.layoutIfNeeded()   // = "recompute if dirty"
 
   <p>A useful way to visualize the difference between push and pull:</p>
 
-  <p><strong>Push (RxSwift / Combine / StateFlow)</strong> is like a <strong>waterfall</strong>. Values flow downward from upstream to downstream. When the source emits, the value cascades through the stream. You stand at the bottom and receive whatever falls. If the waterfall is too fast, you get overwhelmed (backpressure).</p>
+  <p><strong>Push (RxSwift / Combine / StateFlow)</strong> is like a <strong>waterfall</strong>. Values flow downward from upstream to downstream. When the source emits, the value cascades through the stream. You stand at the bottom and receive whatever falls. If the waterfall is too fast, you get overwhelmed (backpressure). StateFlow is the notable exception: it conflates to the latest value, which already moves it toward pull semantics.</p>
 
   <p><strong>Pull (AttributeGraph / swift-state-graph / Compose derivedStateOf)</strong> is like a <strong>bird's-eye view</strong>. You look down at the graph from above. You can see that something changed — a node is marked dirty — but you don't know the new value yet. You only compute it when you need it. Multiple changes can accumulate, and when you finally look, you see the latest state of everything at once.</p>
 

@@ -220,8 +220,9 @@ val total: StateFlow<Int> = derived {
   // auto-tracked via get()
 }
 
-// Observe changes
-autoRun {
+// Observe changes (autoRun needs a CoroutineScope or
+// CoroutineLauncher receiver, e.g. viewModelScope)
+scope.autoRun {
   println("Total is now: " + get(total))
 }
 
@@ -339,7 +340,7 @@ class CounterModel {
   <h3>Trade-offs</h3>
   <ul>
     <li><strong>Strengths:</strong> Auto-tracking via ref.watch(), rich provider type system, code generation support, ProviderScope for testing</li>
-    <li><strong>Weaknesses:</strong> Flutter-only, provider lifecycle and scope rules take time to learn, ProviderScope boilerplate</li>
+    <li><strong>Weaknesses:</strong> Dart-only (the core <code>riverpod</code> package runs without Flutter), provider lifecycle and scope rules take time to learn, ProviderScope boilerplate</li>
   </ul>
 
   <hr />
