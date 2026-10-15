@@ -19,23 +19,31 @@ store.commit {
 }`;
 
 const vergeDerivedCode = `// Derived pipeline — store-scoped derived state
-let countDerived = store.derived(.map(\.count))
+let countDerived = store.derived(.map(\\.count))
 
 // Observe with ifChanged for skip-redundant
 store.sinkState { state in
-  state.ifChanged(\.count) { count in
+  state.ifChanged(\\.count).do { count in
     print("Count changed to \\(count)")
   }
 }`;
 
-const vergeTrackingCode = `// @Tracking macro for SwiftUI
+const vergeTrackingCode = `// @Tracking is applied to the state type
 @Tracking
+struct MyState {
+  var count: Int = 0
+  var name: String = ""
+}
+
 struct ContentView: View {
   let store: Store<MyState, Never>
 
   var body: some View {
-    // Only re-renders when accessed properties change
-    Text("Count: \\(store.state.count)")
+    // StoreReader re-renders only when properties
+    // read inside the closure change
+    StoreReader(store) { $state in
+      Text("Count: \\(state.count)")
+    }
   }
 }`;
 
@@ -114,7 +122,7 @@ struct AppFeature {
 }`;
 
 const tcaTestCode = `// TestStore for exhaustive testing
-@Test func increment() async {
+@MainActor @Test func increment() async {
   let store = TestStore(
     initialState: CounterFeature.State()
   ) {
@@ -181,7 +189,7 @@ function DoubledDisplay() {
   <Code code={vergeDerivedCode} lang="swift" />
 
   <h3>@Tracking for SwiftUI</h3>
-  <p>The <code>@Tracking</code> macro enables fine-grained observation in SwiftUI &mdash; only properties accessed during <code>body</code> evaluation trigger re-renders:</p>
+  <p>The <code>@Tracking</code> macro is applied to the state struct and makes property reads trackable. In SwiftUI, <code>StoreReader</code> (or the <code>@Reading</code> property wrapper) uses that tracking so only properties actually read trigger re-renders:</p>
   <Code code={vergeTrackingCode} lang="swift" />
 
   <h3>Trade-offs</h3>
@@ -196,7 +204,7 @@ function DoubledDisplay() {
   <h2 id="tca">The Composable Architecture (TCA)</h2>
   <p class="not-prose text-sm text-muted-foreground"><a href="https://github.com/pointfreeco/swift-composable-architecture" class="underline underline-offset-4 hover:text-foreground">github.com/pointfreeco/swift-composable-architecture</a></p>
 
-  <p><strong>Platform:</strong> Swift (SwiftUI) &nbsp;|&nbsp; <strong>Pattern:</strong> Store-centric, Elm-inspired</p>
+  <p><strong>Platform:</strong> Swift (SwiftUI &amp; UIKit) &nbsp;|&nbsp; <strong>Pattern:</strong> Store-centric, Elm-inspired</p>
 
   <p>TCA follows the Elm architecture: <code>Store.send(action)</code> dispatches to a <code>Reducer</code> which produces new <code>State</code> + optional <code>Effect</code>s. The unidirectional data flow is strict and exhaustively testable.</p>
 
@@ -220,7 +228,7 @@ function DoubledDisplay() {
   <h3>Trade-offs</h3>
   <ul>
     <li><strong>Strengths:</strong> Exhaustive testing, powerful composition, structured side effects, large community</li>
-    <li><strong>Weaknesses:</strong> Significant boilerplate, no automatic dependency tracking, steep learning curve, SwiftUI-focused</li>
+    <li><strong>Weaknesses:</strong> Significant boilerplate, no dependency tracking for derived state (plain computed properties), steep learning curve</li>
   </ul>
 
   <hr />

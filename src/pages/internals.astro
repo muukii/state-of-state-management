@@ -144,7 +144,7 @@ a.value = 10  // a changed!
 //   → immediately recompute e = c * 10 = 120
 //   → ...cascade continues synchronously
 
-// Pull approach (AttributedGraph / swift-state-graph):
+// Pull approach (AttributeGraph / swift-state-graph):
 //   → mark c as "potentially dirty"
 //   → mark e as "potentially dirty"
 //   → STOP. No computation happens.
@@ -202,7 +202,7 @@ view.layoutIfNeeded()   // = "recompute if dirty"
 
   <p>This is the key idea behind atomic and graph-based state management. An application's state can be modeled as stored values and computed values with dependencies between them. Excel, SwiftUI's view updates, Jotai's atom graph, and swift-state-graph's node system all sit in the same broad family of dependency-driven recomputation.</p>
 
-  <p>The algorithms behind this aren't new. SwiftUI's AttributedGraph is based on academic papers from the 1970s and 1980s. Nothing in this space is truly novel — it's established computer science being applied to UI frameworks.</p>
+  <p>The algorithms behind this aren't new. SwiftUI's AttributeGraph is private and undocumented, but its name and behavior echo attribute grammars (Knuth, 1968) and the incremental attribute evaluation research of the 1980s. Much of this space is established computer science being applied to UI frameworks.</p>
 
   <hr />
 
@@ -324,7 +324,7 @@ view.layoutIfNeeded()   // = "recompute if dirty"
 
   <Code code={swiftuiBodyCode} lang="swift" />
 
-  <p>This is why SwiftUI can achieve fine-grained updates without the developer explicitly subscribing to anything. The <code>body</code> closure is an escaping closure — it's only executed when the view needs to render. During execution, the system (AttributedGraph) tracks which <code>@State</code> / <code>@Observable</code> properties are accessed, building the dependency edges automatically.</p>
+  <p>This is why SwiftUI can achieve fine-grained updates without the developer explicitly subscribing to anything. The <code>body</code> closure is an escaping closure — it's only executed when the view needs to render. During execution, the system (AttributeGraph) tracks which <code>@State</code> / <code>@Observable</code> properties are accessed, building the dependency edges automatically.</p>
 
   <p>If a property is never accessed in the current execution path, the view has no dependency on it, and changes to that property will <strong>not</strong> trigger a re-evaluation of <code>body</code>.</p>
 
@@ -356,9 +356,9 @@ view.layoutIfNeeded()   // = "recompute if dirty"
 
   <p>A useful way to visualize the difference between push and pull:</p>
 
-  <p><strong>Push (RxSwift / Combine / StateFlow)</strong> is like a <strong>waterfall</strong>. Values flow downward from upstream to downstream. When the source emits, the value cascades through the stream. You stand at the bottom and receive whatever falls. If the waterfall is too fast, you get overwhelmed (backpressure).</p>
+  <p><strong>Push (RxSwift / Combine / StateFlow)</strong> is like a <strong>waterfall</strong>. Values flow downward from upstream to downstream. When the source emits, the value cascades through the stream. You stand at the bottom and receive whatever falls. If the waterfall is too fast, you get overwhelmed (backpressure). StateFlow is the notable exception: it conflates to the latest value, which already moves it toward pull semantics.</p>
 
-  <p><strong>Pull (AttributedGraph / swift-state-graph / Compose derivedStateOf)</strong> is like a <strong>bird's-eye view</strong>. You look down at the graph from above. You can see that something changed — a node is marked dirty — but you don't know the new value yet. You only compute it when you need it. Multiple changes can accumulate, and when you finally look, you see the latest state of everything at once.</p>
+  <p><strong>Pull (AttributeGraph / swift-state-graph / Compose derivedStateOf)</strong> is like a <strong>bird's-eye view</strong>. You look down at the graph from above. You can see that something changed — a node is marked dirty — but you don't know the new value yet. You only compute it when you need it. Multiple changes can accumulate, and when you finally look, you see the latest state of everything at once.</p>
 
   <p>Both can express the same data flow patterns (A + B = C). The difference is <strong>who drives the computation</strong>: the producer (push) or the consumer (pull).</p>
 

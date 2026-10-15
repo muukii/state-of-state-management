@@ -18,8 +18,8 @@ store.commit { $0.count += 1 }
 
 // Derived with ifChanged
 store.sinkState { state in
-  state.ifChanged(\.count) { count in
-    print("Count: \(count)")
+  state.ifChanged(\\.count).do { count in
+    print("Count: \\(count)")
   }
 }`;
 
@@ -195,7 +195,7 @@ class ViewModel: ObservableObject {
     <li>Large, active community and extensive documentation</li>
   </ul>
 
-  <p><strong>Trade-offs:</strong> Significant boilerplate for simple features, steep learning curve, no automatic dependency tracking, primarily SwiftUI-focused.</p>
+  <p><strong>Trade-offs:</strong> Significant boilerplate for simple features, steep learning curve, no automatic dependency tracking for derived state.</p>
 
   <p><a href={`${base}/store/#tca`}>See detailed analysis &rarr;</a></p>
 
@@ -227,7 +227,7 @@ class ViewModel: ObservableObject {
 
   <p><strong>Pattern:</strong> DAG-based graph &nbsp;|&nbsp; <strong>Status:</strong> Newest entrant</p>
 
-  <p>swift-state-graph is the newest iOS state management library, bringing a pull/lazy graph approach to Swift. Its current public API models state with <code>@GraphStored</code> and <code>@GraphComputed</code> properties on a <code>GraphObject</code>, using ThreadLocal-based tracking and lazy invalidation.</p>
+  <p>swift-state-graph is the newest iOS state management library, bringing a pull/lazy graph approach to Swift. Its current public API models state with <code>@GraphStored</code> and <code>@GraphComputed</code> properties on a plain class (optionally marked <code>GraphObject</code> for SwiftUI environment injection), using ThreadLocal-based tracking and lazy invalidation.</p>
 
   <Code code={ssgExample} lang="swift" />
 
@@ -237,7 +237,7 @@ class ViewModel: ObservableObject {
     <li>ThreadLocal auto-tracking for dependency discovery</li>
     <li>Swift macros (<code>@GraphStored</code>, <code>@GraphComputed</code>)</li>
     <li>Per-node locking for thread safety</li>
-    <li>Extensible <code>Storage</code> protocol</li>
+    <li>UserDefaults-backed nodes via <code>@GraphUserDefault</code></li>
     <li>Both SwiftUI and UIKit support</li>
   </ul>
 
@@ -247,7 +247,7 @@ class ViewModel: ObservableObject {
 
   <h2>iOS Has the Richest Diversity</h2>
 
-  <p>Among the three platforms surveyed (Web, iOS, Android), <strong>iOS has the richest diversity of state management approaches</strong>:</p>
+  <p>Among the platforms surveyed (Web, iOS, Android, Flutter), <strong>iOS has an unusually diverse set of state management approaches</strong>:</p>
 
   <div class="not-prose my-6 w-full overflow-auto rounded-lg border border-border bg-card">
     <table class="w-full min-w-[600px] caption-bottom text-sm">
@@ -282,7 +282,7 @@ class ViewModel: ObservableObject {
           <td class="p-4 align-middle font-medium text-foreground">swift-state-graph</td>
           <td class="p-4 align-middle text-muted-foreground">DAG graph</td>
           <td class="p-4 align-middle text-muted-foreground">Implicit (auto)</td>
-	          <td class="p-4 align-middle text-muted-foreground">Jotai / AttributedGraph-like systems</td>
+	          <td class="p-4 align-middle text-muted-foreground">Jotai / AttributeGraph-like systems</td>
         </tr>
       </tbody>
     </table>

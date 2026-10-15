@@ -38,10 +38,10 @@ const doubled = createStore(() => count.state * 2);
 count.setState(() => 5);
 console.log(doubled.state); // 10
 
-// Works with React, Vue, Solid, Angular
+// Works with React, Vue, Solid, Angular, Svelte, Preact, Lit
 // Framework adapters subscribe to the same core store`;
 
-const signalsAngularCode = `// Angular v16+ Signals
+const signalsAngularCode = `// Angular Signals (v16+; signal/computed stable in v17, effect in v20)
 import { signal, computed, effect } from '@angular/core';
 
 const count = signal(0);
@@ -100,7 +100,7 @@ const doubled = new Signal.Computed(() => counter.get() * 2);
   <p>The evolution on the web followed a clear trajectory:</p>
 
   <ol>
-    <li><strong>Redux (2015):</strong> Single store, actions, reducers &mdash; the Elm architecture for React. Dominant for years, now declining in new projects.</li>
+    <li><strong>Redux (2015):</strong> Single store, actions, reducers &mdash; Flux-inspired, borrowing Elm's reducer/update idea. Dominant for years, now declining in new projects.</li>
     <li><strong>Zustand (2019):</strong> Minimal store-centric state with manual selectors.</li>
     <li><strong>Jotai (2020):</strong> Atomic graph with read-time dependency tracking via <code>get()</code>.</li>
     <li><strong>TanStack Store (2023):</strong> Multi-framework signals-style store with derived stores.</li>
@@ -135,7 +135,7 @@ const doubled = new Signal.Computed(() => counter.get() * 2);
 
   <p>Unlike Zustand where the store is a single object, Jotai's state is <strong>distributed across atoms</strong>. Each component subscribes only to the atoms it uses, achieving fine-grained reactivity without manual selectors.</p>
 
-  <p>Jotai descends from Facebook's <a href="https://recoiljs.org/">Recoil</a> but simplifies the model: no string keys, no explicit <code>RecoilRoot</code>, and a smaller API. As Recoil's maintenance has slowed, Jotai has become a common successor for atomic state in React.</p>
+  <p>Jotai descends from Facebook's <a href="https://recoiljs.org/">Recoil</a> but simplifies the model: no string keys, no explicit <code>RecoilRoot</code>, and a smaller API. Recoil's repository was archived in January 2025, and Jotai has become a common successor for atomic state in React.</p>
 
   <hr />
 
@@ -165,8 +165,11 @@ const doubled = new Signal.Computed(() => counter.get() * 2);
   <Code code={signalsSolidCode} lang="typescript" />
 
   <h3>Vue 3</h3>
-  <p>Vue 3's <code>ref()</code> and <code>computed()</code> are Signals under a different name:</p>
+  <p>Vue's own documentation describes signals as "the same kind of reactivity primitive as Vue refs"; <code>computed()</code> plays the role of a computed signal:</p>
   <Code code={signalsVueCode} lang="typescript" />
+
+  <h3>Svelte 5 and Preact</h3>
+  <p>Svelte 5's runes (<code>$state</code>, <code>$derived</code>, <code>$effect</code>, stable since October 2024) are powered by signals under the hood, and Preact ships <code>@preact/signals</code> with the same signal / computed / effect shape.</p>
 
   <h3>TC39 Proposal</h3>
   <p>The <a href="https://github.com/tc39/proposal-signals">TC39 Signals proposal</a> (Stage 1) aims to standardize reactive primitives at the language level:</p>
