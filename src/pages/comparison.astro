@@ -7,7 +7,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const vergeDoubledCode = `// Verge — store-centric, explicit derived
 let store = Store<MyState, Never>(initialState: .init())
 
-let doubled = store.derived(.map(\\.count).map { $0 * 2 })
+let doubled = store.derived(.map { $0.count * 2 })
 
 store.commit { $0.count = 5 }
 // doubled emits 10 to subscribers`;
@@ -280,7 +280,7 @@ final doubledProvider = Provider((ref) {
           <td class="p-4 align-middle text-muted-foreground">Single-threaded (Dart)</td>
           <td class="p-4 align-middle text-muted-foreground">Sync (single-threaded)</td>
           <td class="p-4 align-middle text-muted-foreground">Sync</td>
-          <td class="p-4 align-middle text-muted-foreground">React reconciler</td>
+          <td class="p-4 align-middle text-muted-foreground">Sync (single-threaded)</td>
           <td class="p-4 align-middle text-muted-foreground">Per-node locking</td>
           <td class="p-4 align-middle text-muted-foreground">Snapshot isolation</td>
         </tr>

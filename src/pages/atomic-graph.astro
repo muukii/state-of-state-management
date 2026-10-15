@@ -171,15 +171,14 @@ const ssgLazyCode = `// Lazy invalidation strategy:
 // Per-node locking for thread safety:
 // Each node has its own lock, avoiding global contention`;
 
-const ssgStorageCode = `// Storage protocol — extensible persistence
-protocol Storage {
-  associatedtype Value
-  func get() -> Value
-  func set(_ value: Value)
+const ssgStorageCode = `// UserDefaults-backed value that still participates in the graph
+final class Settings {
+  @GraphUserDefault("theme")
+  var theme: String = "light"
 }
 
-// Built-in: InMemoryStorage, UserDefaultsStorage
-// Custom: CloudKitStorage, SQLiteStorage, etc.`;
+// Reads are tracked like any other stored node;
+// writes persist to UserDefaults.`;
 
 const composeDerivedCode = `@Composable
 fun FilteredList(viewModel: ListViewModel) {
@@ -370,7 +369,7 @@ class CounterModel {
 
   <p><strong>Platform:</strong> Swift 6.0+ (SwiftUI &amp; UIKit) &nbsp;|&nbsp; <strong>Pattern:</strong> DAG-based graph</p>
 
-  <p>swift-state-graph models state as a <strong>directed acyclic graph (DAG)</strong>. Its current public API uses <code>@GraphStored</code> properties for source state and <code>@GraphComputed</code> properties for derived state on a <code>GraphObject</code>, with ThreadLocal-based tracking for dependency discovery and lazy invalidation for reads.</p>
+  <p>swift-state-graph models state as a <strong>directed acyclic graph (DAG)</strong>. Its current public API uses <code>@GraphStored</code> properties for source state and <code>@GraphComputed</code> properties for derived state on a plain class (conforming to the <code>GraphObject</code> marker protocol is only needed to pass the object through SwiftUI's environment), with ThreadLocal-based tracking for dependency discovery and lazy invalidation for reads.</p>
 
   <h3>Graph Definition</h3>
   <Code code={ssgDefinitionCode} lang="swift" />
@@ -389,8 +388,8 @@ class CounterModel {
   <h3>Swift Macros</h3>
   <p>The library leverages Swift macros (<code>@GraphStored</code>, <code>@GraphComputed</code>) to reduce boilerplate. The macros generate the underlying node infrastructure, storage accessors, and dependency-tracking wrappers.</p>
 
-  <h3>Storage Protocol</h3>
-  <p>The <code>Storage</code> protocol allows pluggable persistence backends:</p>
+  <h3>UserDefaults Persistence</h3>
+  <p><code>@GraphUserDefault</code> keeps a graph-aware value in sync with a UserDefaults key without changing the stored-node primitive:</p>
   <Code code={ssgStorageCode} lang="swift" />
 
   <h3>Thread Safety</h3>
@@ -398,7 +397,7 @@ class CounterModel {
 
   <h3>Trade-offs</h3>
   <ul>
-    <li><strong>Strengths:</strong> Glitch-free, lazy evaluation, auto-tracking, per-node locking, UIKit + SwiftUI, extensible storage</li>
+    <li><strong>Strengths:</strong> Glitch-free, lazy evaluation, auto-tracking, per-node locking, UIKit + SwiftUI, UserDefaults-backed nodes</li>
     <li><strong>Weaknesses:</strong> Newest library (smallest ecosystem), requires Swift 6.0+, DAG mental model may be unfamiliar</li>
   </ul>
 

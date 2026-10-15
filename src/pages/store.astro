@@ -19,23 +19,31 @@ store.commit {
 }`;
 
 const vergeDerivedCode = `// Derived pipeline — store-scoped derived state
-let countDerived = store.derived(.map(\.count))
+let countDerived = store.derived(.map(\\.count))
 
 // Observe with ifChanged for skip-redundant
 store.sinkState { state in
-  state.ifChanged(\.count) { count in
+  state.ifChanged(\\.count).do { count in
     print("Count changed to \\(count)")
   }
 }`;
 
-const vergeTrackingCode = `// @Tracking macro for SwiftUI
+const vergeTrackingCode = `// @Tracking is applied to the state type
 @Tracking
+struct MyState {
+  var count: Int = 0
+  var name: String = ""
+}
+
 struct ContentView: View {
   let store: Store<MyState, Never>
 
   var body: some View {
-    // Only re-renders when accessed properties change
-    Text("Count: \\(store.state.count)")
+    // StoreReader re-renders only when properties
+    // read inside the closure change
+    StoreReader(store) { $state in
+      Text("Count: \\(state.count)")
+    }
   }
 }`;
 
@@ -181,7 +189,7 @@ function DoubledDisplay() {
   <Code code={vergeDerivedCode} lang="swift" />
 
   <h3>@Tracking for SwiftUI</h3>
-  <p>The <code>@Tracking</code> macro enables fine-grained observation in SwiftUI &mdash; only properties accessed during <code>body</code> evaluation trigger re-renders:</p>
+  <p>The <code>@Tracking</code> macro is applied to the state struct and makes property reads trackable. In SwiftUI, <code>StoreReader</code> (or the <code>@Reading</code> property wrapper) uses that tracking so only properties actually read trigger re-renders:</p>
   <Code code={vergeTrackingCode} lang="swift" />
 
   <h3>Trade-offs</h3>
