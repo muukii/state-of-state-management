@@ -284,12 +284,12 @@ class CounterModel {
   <Code code={jotaiDerivedCode} lang="typescript" />
 
   <h3>Relationship to Recoil</h3>
-  <p>Jotai was inspired by <a href="https://recoiljs.org/">Recoil</a> (Facebook's experimental atomic state library for React) but takes a simpler approach: no string keys, no explicit <code>RecoilRoot</code> required, and a smaller API surface. While Recoil is no longer actively maintained, Jotai has become a common successor for atomic state in React.</p>
+  <p>Jotai was inspired by <a href="https://recoiljs.org/">Recoil</a> (Facebook's experimental atomic state library for React) but takes a simpler approach: no string keys, no explicit <code>RecoilRoot</code> required, and a smaller API surface. Recoil's repository was archived in January 2025, and Jotai has become a common successor for atomic state in React.</p>
 
   <h3>Trade-offs</h3>
   <ul>
     <li><strong>Strengths:</strong> Minimal API, auto-tracking, async support, bottom-up composition, React Suspense integration</li>
-    <li><strong>Weaknesses:</strong> React-only, debugging atomic graphs can be challenging, no built-in devtools (community solutions exist)</li>
+    <li><strong>Weaknesses:</strong> React-first (the vanilla store works outside React, but other bindings are thin), debugging large atom graphs can be challenging, devtools are a separate package (<code>jotai-devtools</code>)</li>
   </ul>
 
   <hr />
@@ -348,7 +348,7 @@ class CounterModel {
   <h2 id="tanstack-store">TanStack Store</h2>
   <p class="not-prose text-sm text-muted-foreground"><a href="https://github.com/TanStack/store" class="underline underline-offset-4 hover:text-foreground">github.com/TanStack/store</a></p>
 
-  <p><strong>Platform:</strong> TypeScript (React, Vue, Solid, Angular, Svelte) &nbsp;|&nbsp; <strong>Pattern:</strong> Signals-style store graph</p>
+  <p><strong>Platform:</strong> TypeScript (React, Vue, Solid, Angular, Svelte, Preact, Lit) &nbsp;|&nbsp; <strong>Pattern:</strong> Signals-style store graph</p>
 
   <p>TanStack Store keeps the word "store", but the important part for this report is its signals-style graph. A derived store reads other stores during computation, and those reads form dependency edges.</p>
 
